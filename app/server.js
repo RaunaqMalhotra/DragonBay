@@ -1,4 +1,5 @@
 const pg = require("pg");
+const path = require("path");
 const express = require("express");
 const app = express();
 
@@ -14,6 +15,11 @@ pool.connect().then(function () {
 
 app.use(express.static("public"));
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  // Re-direct "/" to listing.html
+  res.sendFile(path.join(__dirname, 'public', 'listing.html')); // listing.html is a placeholder for not
+});
 
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
