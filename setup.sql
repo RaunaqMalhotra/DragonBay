@@ -2,9 +2,9 @@ CREATE DATABASE dragonbay;
 \c dragonbay
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
+    username VARCHAR(50),
     email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE Listings (

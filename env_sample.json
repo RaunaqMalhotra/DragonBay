@@ -1,7 +1,0 @@
-{
-	"user": "YOUR_POSTGRES_USERNAME",
-	"host": "localhost",
-	"database": "dragonbay",
-	"password": "YOUR_POSTGRES_PASSWORD",
-	"port": 5432
-}
