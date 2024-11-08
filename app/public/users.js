@@ -23,7 +23,8 @@ document.getElementById("signup-form").addEventListener("submit", async (e) => {
             window.location.href = "http://localhost:3000";
 
         } else {
-            alert("Signup failed. Try a different username.");
+             const errorData = await response.json();
+             alert(`Signup failed: ${errorData.error || "Try a different username."}`);
         }
     } catch (error) {
         console.error("Error:", error);

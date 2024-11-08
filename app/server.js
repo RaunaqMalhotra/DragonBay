@@ -8,7 +8,7 @@ let crypto = require("crypto");
 
 const port = 3000;
 const hostname = "localhost";
-
+const EmailVerificationAPIKey = "f0GLPLfqS8QcGmRR";
 const env = require("../config/env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
@@ -32,17 +32,14 @@ function makeToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// must use same cookie options when setting/deleting a given cookie with res.cookie and res.clearCookie
-// or else the cookie won't actually delete
-// remember that the token is essentially a password that must be kept secret
 let cookieOptions = {
   httpOnly: true, // client-side JS can't access this cookie; important to mitigate cross-site scripting attack damage
   secure: true, // cookie will only be sent over HTTPS connections (and localhost); important so that traffic sniffers can't see it even if our user tried to use an HTTP version of our site, if we supported that
   sameSite: "strict", // browser will only include this cookie on requests to this domain, not other domains; important to prevent cross-site request forgery attacks
 };
 
+// TODO
 function validateLogin(body) {
-  // TODO
   return true;
 }
 
@@ -51,14 +48,50 @@ app.post("/create", async (req, res) => {
 
   // TODO validate body is correct shape and type
   if (!validateLogin(body)) {
-    return res.sendStatus(400); // TODO
+    return res.sendStatus(400);
   }
 
   let { username, email, password } = body;
   console.log(username, email, password);
 
-  // TODO check username doesn't already exist
-  // TODO validate username/password meet requirements
+  // Split the email to get the domain
+  const emailDomain = email.split("@")[1];
+  if (emailDomain !== "drexel.edu") {
+    return res.status(400).json({ error: "Must use a Drexel University email address" });
+  }
+
+
+  // check username or email doesn't already exist
+  const result = await pool.query(
+    "SELECT 1 FROM users WHERE username = $1 OR email = $2 LIMIT 1",
+    [username, email]
+  );
+  if (result.rows.length > 0) {
+    return res.status(400).json({ error: "Username or email already exists" });
+  }
+
+  // validate username/password meet requirements
+
+  const url = `https://client.myemailverifier.com/verifier/validate_single/${email}/${EmailVerificationAPIKey}`;
+
+  try {
+    
+    const emailResponse = await fetch(url);
+    if (emailResponse.ok) {
+      const data = await emailResponse.json();
+      if (data.Status === "Invalid") {
+        return res.status(400).json({ error: "Invalid email address" });
+      }
+    } else if (emailResponse.status === 429) {
+      return res.status(429).json({ error: "Too many requests. Please try again later." });
+    } else {
+      return res.status(500).json({ error: "Failed to verify email address" });
+    }
+  } catch (error) {
+    console.error("Email verification error:", error.message);
+    return res.status(500).json({ error: "Email verification service error" });
+  }
+
 
   let hash;
   try {
@@ -80,9 +113,9 @@ app.post("/create", async (req, res) => {
     return res.sendStatus(500); // TODO
   }
 
-  // TODO automatically log people in when they create account, because why not?
+  // automatically log people in when they create account
 
-  return res.status(200).send(); // TODO
+  return res.status(200).send(); 
 });
 
 app.post("/login", async (req, res) => {
@@ -101,7 +134,7 @@ app.post("/login", async (req, res) => {
     );
   } catch (error) {
     console.log("SELECT FAILED", error);
-    return res.sendStatus(500); // TODO
+    return res.sendStatus(500); 
   }
 
   // username doesn't exist
