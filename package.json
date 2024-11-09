@@ -5,6 +5,13 @@
   },
   "dependencies": {
     "express": "^4.21.1",
-    "pg": "^8.8.0"
-  }
+    "pg": "^8.13.1"
+  },
+  "name": "dragonbay",
+  "version": "1.0.0",
+  "description": "To start, run",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
