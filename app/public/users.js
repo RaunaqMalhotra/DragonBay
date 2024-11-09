@@ -1,8 +1,9 @@
-// URL of the server (adjust if needed)
 const serverUrl = "http://localhost:3000";
 
 // Event listener for the signup form
-document.getElementById("signup-form").addEventListener("submit", async (e) => {
+const signupForm = document.getElementById("signup-form");
+if (signupForm) {
+signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = document.getElementById("signup-username").value;
     const email = document.getElementById("signup-email").value;
@@ -30,12 +31,16 @@ document.getElementById("signup-form").addEventListener("submit", async (e) => {
         console.error("Error:", error);
     }
 });
+}
 
 // Event listener for the login form
-document.getElementById("login-form").addEventListener("submit", async (e) => {
+const loginForm = document.getElementById("login-form");
+if (loginForm) {
+loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = document.getElementById("login-username").value;
     const password = document.getElementById("login-password").value;
+    console.log("user:", username);
 
     try {
         const response = await fetch(`${serverUrl}/login`, {
@@ -49,7 +54,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Login successful!");
             // Redirect to a protected page or display a logged-in message
-            window.location.href = "http://localhost:3000";
+            window.location.href = "http://localhost:3000/listing.html";
 
         } else {
             alert("Login failed. Check your username and password.");
@@ -58,3 +63,5 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
         console.error("Error:", error);
     }
 });
+}
+

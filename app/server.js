@@ -8,7 +8,6 @@ let crypto = require("crypto");
 
 const port = 3000;
 const hostname = "localhost";
-const EmailVerificationAPIKey = "f0GLPLfqS8QcGmRR";
 const env = require("../config/env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
@@ -22,8 +21,8 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 app.get("/", (req, res) => {
-  // Re-direct "/" to listing.html
-  res.sendFile(path.join(__dirname, 'public', 'listing.html')); // listing.html is a placeholder for not
+  // Re-direct "/" to login.html
+  res.sendFile(path.join(__dirname, 'public', 'login.html')); // listing.html is a placeholder for not
 });
 
 
@@ -39,59 +38,56 @@ let cookieOptions = {
 };
 
 // TODO
-function validateLogin(body) {
-  return true;
-}
-
-app.post("/create", async (req, res) => {
-  let { body } = req;
-
-  // TODO validate body is correct shape and type
-  if (!validateLogin(body)) {
-    return res.sendStatus(400);
-  }
-
+async function validateSignUp(body) {
   let { username, email, password } = body;
   console.log(username, email, password);
 
-  // Split the email to get the domain
   const emailDomain = email.split("@")[1];
   if (emailDomain !== "drexel.edu") {
-    return res.status(400).json({ error: "Must use a Drexel University email address" });
+    throw new Error("Must use a Drexel University email address");
   }
 
-
-  // check username or email doesn't already exist
+  // Check if username or email already exists
   const result = await pool.query(
     "SELECT 1 FROM users WHERE username = $1 OR email = $2 LIMIT 1",
     [username, email]
   );
   if (result.rows.length > 0) {
-    return res.status(400).json({ error: "Username or email already exists" });
+    throw new Error("Username or email already exists");
   }
 
-  // validate username/password meet requirements
-
-  const url = `https://client.myemailverifier.com/verifier/validate_single/${email}/${EmailVerificationAPIKey}`;
+  // Email verification request
+  const url = `https://client.myemailverifier.com/verifier/validate_single/${email}/${env.EmailVerificationAPIKey}`;
 
   try {
-    
     const emailResponse = await fetch(url);
     if (emailResponse.ok) {
       const data = await emailResponse.json();
       if (data.Status === "Invalid") {
-        return res.status(400).json({ error: "Invalid email address" });
+        throw new Error("Invalid email address");
       }
     } else if (emailResponse.status === 429) {
-      return res.status(429).json({ error: "Too many requests. Please try again later." });
+      throw new Error("Too many requests. Please try again later.");
     } else {
-      return res.status(500).json({ error: "Failed to verify email address" });
+      throw new Error("Failed to verify email address");
     }
   } catch (error) {
     console.error("Email verification error:", error.message);
-    return res.status(500).json({ error: "Email verification service error" });
+    throw new Error("Email verification service error");
   }
+  return true;
+}
 
+
+app.post("/create", async (req, res) => {
+  let { body } = req;
+  let { username, email, password } = body;
+  // validate body is correct shape and type
+  try {
+    await validateSignUp(body);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
 
   let hash;
   try {
@@ -120,12 +116,7 @@ app.post("/create", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   let { body } = req;
-  // TODO validate body is correct shape and type
-  if (!validateLogin(body)) {
-    return res.sendStatus(400); // TODO
-  }
   let { username, password } = body;
-
   let result;
   try {
     result = await pool.query(
