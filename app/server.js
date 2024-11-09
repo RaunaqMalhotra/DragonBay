@@ -21,7 +21,7 @@ app.use(express.json());
 
 // Serve the listing.html page
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'listing.html')); // listing.html is a placeholder for not
+  res.sendFile(path.join(__dirname, 'public', 'users.html')); // listing.html is a placeholder for not
 });
 
 // Endpoint to handle form submission and insert listing into database
