@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.get("/", (req, res) => {
   // Re-direct "/" to listing.html
-  res.sendFile(path.join(__dirname, 'public', 'listing.html')); // listing.html is a placeholder for not
+  res.sendFile(path.join(__dirname, 'public', 'users.html')); // listing.html is a placeholder for not
 });
 
 
