@@ -82,7 +82,7 @@ let cookieOptions = {
   sameSite: "strict", // browser will only include this cookie on requests to this domain, not other domains; important to prevent cross-site request forgery attacks
 };
 
-// TODO
+// validate user sign up
 async function validateSignUp(body) {
   let { username, email, password } = body;
   console.log(username, email, password);
@@ -241,8 +241,6 @@ app.get("/public", (req, res) => {
 app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
 });
-
-
 
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
