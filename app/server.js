@@ -2,6 +2,9 @@ const pg = require("pg");
 const path = require("path");
 const express = require("express");
 const app = express();
+const argon2 = require("argon2"); 
+const cookieParser = require("cookie-parser");
+const crypto = require("crypto");
 
 const port = 3000;
 const hostname = "localhost";
