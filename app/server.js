@@ -2,6 +2,9 @@ const pg = require("pg");
 const path = require("path");
 const express = require("express");
 const app = express();
+const argon2 = require("argon2"); 
+const cookieParser = require("cookie-parser");
+const crypto = require("crypto");
 
 const port = 3000;
 const hostname = "localhost";
@@ -123,7 +126,88 @@ async function validateSignUp(body) {
   return true;
 }
 
+// Serve the login.html page
+app.get("/", (req, res) => {
+  // Re-direct "/" to login.html
+  res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
+});
 
+// Endpoint to handle form submission and insert listing into database
+app.post("/add-listing", (req, res) => {
+  const { name, description, price, tags, photo } = req.body;
+
+  // Insert data into the Listings table
+  pool.query(
+    `INSERT INTO Listings (title, description, price, listing_date, status) 
+    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
+    [name, description, price]
+  )
+  .then(result => {
+    let listingId = result.rows[0].listing_id;
+
+    // Insert tags if needed (chaining promises)
+    let tagPromises = tags.map(tag => {
+      return pool.query(
+        `INSERT INTO Tags (tag_name) 
+        VALUES ($1) 
+        ON CONFLICT (tag_name) DO NOTHING`,
+        [tag]
+      ).then(() => {
+        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
+      }).then(tagResult => {
+        const tagId = tagResult.rows[0].tag_id;
+        return pool.query(
+          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
+          [listingId, tagId]
+        );
+      });
+    });
+
+    // Execute all tag insertion promises
+    return Promise.all(tagPromises);
+  })
+  .then(() => {
+    res.status(200).json({ message: "Listing added successfully" });
+  })
+  .catch(error => {
+    console.error("Error inserting listing:", error);
+    res.status(500).json({ message: "Failed to add listing" });
+  });
+});
+
+// Route for viewing an individual product page
+app.get("/product.html", (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'product.html'));
+});
+
+// Endpoint to fetch all listings
+app.get("/api/listings", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM Listings");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching listings:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Endpoint to fetch a single listing by ID
+app.get("/api/listings/:id", async (req, res) => {
+  const listingId = req.params.id;
+  try {
+    const result = await pool.query("SELECT * FROM Listings WHERE listing_id = $1", [listingId]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: "Listing not found" });
+    }
+  } catch (err) {
+    console.error("Error fetching listing:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Endpoint to create a user
 app.post("/create", async (req, res) => {
   let { body } = req;
   let { username, email, password } = body;
@@ -159,6 +243,7 @@ app.post("/create", async (req, res) => {
   return res.status(200).send(); 
 });
 
+// End point to log in a user
 app.post("/login", async (req, res) => {
   let { body } = req;
   let { username, password } = body;
@@ -212,6 +297,7 @@ let authorize = (req, res, next) => {
   next();
 };
 
+// End point to log out a user
 app.post("/logout", (req, res) => {
   let { token } = req.cookies;
 
