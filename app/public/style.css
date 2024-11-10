@@ -81,18 +81,6 @@ input[type="file"] {
 	margin: 1rem 0;
 }
 
-.product-grid { 
-	display: flex; 
-	flex-wrap: wrap;
-	gap: 10px;
-	border: 1px solid #ccc; 
-	padding: 10px; 
-	width: 200px; 
-	text-align: center; 
-    text-decoration: none; 
-	color: inherit; 
-}
-
 #message {
 	margin: 1rem 0;
 }
