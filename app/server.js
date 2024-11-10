@@ -2,29 +2,74 @@ const pg = require("pg");
 const path = require("path");
 const express = require("express");
 const app = express();
-let argon2 = require("argon2"); 
-let cookieParser = require("cookie-parser");
-let crypto = require("crypto");
 
 const port = 3000;
 const hostname = "localhost";
+
 const env = require("../config/env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
+
 let tokenStorage = {};
 
 pool.connect().then(function () {
   console.log(`Connected to database ${env.database}`);
+}).catch(error => {
+  console.error("Database connection error:", error);
 });
 
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve the login.html page
 app.get("/", (req, res) => {
   // Re-direct "/" to login.html
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); // listing.html is a placeholder for not
+  res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
 });
 
+// Endpoint to handle form submission and insert listing into database
+app.post("/add-listing", (req, res) => {
+  const { name, description, price, tags, photo } = req.body;
+
+  // Insert data into the Listings table
+  pool.query(
+    `INSERT INTO Listings (title, description, price, listing_date, status) 
+    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
+    [name, description, price]
+  )
+  .then(result => {
+    let listingId = result.rows[0].listing_id;
+
+    // Insert tags if needed (chaining promises)
+    let tagPromises = tags.map(tag => {
+      return pool.query(
+        `INSERT INTO Tags (tag_name) 
+        VALUES ($1) 
+        ON CONFLICT (tag_name) DO NOTHING`,
+        [tag]
+      ).then(() => {
+        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
+      }).then(tagResult => {
+        const tagId = tagResult.rows[0].tag_id;
+        return pool.query(
+          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
+          [listingId, tagId]
+        );
+      });
+    });
+
+    // Execute all tag insertion promises
+    return Promise.all(tagPromises);
+  })
+  .then(() => {
+    res.status(200).json({ message: "Listing added successfully" });
+  })
+  .catch(error => {
+    console.error("Error inserting listing:", error);
+    res.status(500).json({ message: "Failed to add listing" });
+  });
+});
 
 /* returns a random 32 byte string */
 function makeToken() {
@@ -37,7 +82,7 @@ let cookieOptions = {
   sameSite: "strict", // browser will only include this cookie on requests to this domain, not other domains; important to prevent cross-site request forgery attacks
 };
 
-// TODO
+// validate user sign up
 async function validateSignUp(body) {
   let { username, email, password } = body;
   console.log(username, email, password);
@@ -196,7 +241,6 @@ app.get("/public", (req, res) => {
 app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
 });
-
 
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
