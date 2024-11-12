@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2>List Your Item for Bidding</h2>
     <form id="biddingForm">
+        <h2>List Your Item for Bidding</h2>
+
         <label for="itemName">Item Name</label>
         <input type="text" id="itemName" name="itemName" required>
 
@@ -25,8 +26,9 @@
         <input type="file" id="itemPhoto" name="itemPhoto" accept="image/*" required>
 
         <button type="bidSubmit">List for Bidding</button>
+
+        <div id="message"></div>
     </form>
-    <div id="message"></div>
     <script src="bidding.js"></script>
 </body>
 </html>
