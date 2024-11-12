@@ -199,21 +199,17 @@ app.post("/add-bid-listing", (req, res) => {
   });
 });
 
-// Route for viewing an individual product page
-app.get("/product.html", (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'product.html'));
-});
-
-// Endpoint to fetch all listings
+// Endpoint to fetch all non-auction listings
 app.get("/api/listings", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM Listings");
+    const result = await pool.query("SELECT * FROM Listings WHERE is_auction = false");
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching listings:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // Endpoint to fetch a single listing by ID
 app.get("/api/listings/:id", async (req, res) => {
