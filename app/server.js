@@ -175,6 +175,30 @@ app.post("/add-listing", (req, res) => {
   });
 });
 
+// Endpoint to handle bid form submission and insert bid listing into database
+app.post("/add-bid-listing", (req, res) => {
+  let { name, description, minimumBid, auctionEndDate, photo } = req.body;
+
+  pool.query(
+      `INSERT INTO Listings (title, description, minimum_bid, listing_date, auction_end_date, status, is_auction) 
+      VALUES ($1, $2, $3, NOW(), $4, 'open', TRUE) RETURNING listing_id`,
+      [name, description, minimumBid, auctionEndDate]
+  )
+  .then(result => {
+      let listingId = result.rows[0].listing_id;
+      if (photo) {
+          return pool.query(`INSERT INTO Photos (listing_id, photo_url) VALUES ($1, $2)`, [listingId, photo]);
+      }
+  })
+  .then(() => {
+      res.status(200).json({ success: true, message: "Listing added successfully for bidding" });
+  })
+  .catch(error => {
+      console.error("Error adding bidding listing:", error);
+      res.status(500).json({ success: false, message: "Failed to add listing for bidding" });
+  });
+});
+
 // Route for viewing an individual product page
 app.get("/product.html", (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'product.html'));
