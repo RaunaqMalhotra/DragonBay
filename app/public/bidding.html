@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Item for Bidding</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form id="biddingForm">
+        <h2>List Your Item for Bidding</h2>
+
+        <label for="itemName">Item Name</label>
+        <input type="text" id="itemName" name="itemName" required>
+
+        <label for="itemDescription">Description</label>
+        <textarea id="itemDescription" name="itemDescription" rows="4" required></textarea>
+
+        <label for="minBidPrice">Minimum Bid Price</label>
+        <input type="number" id="minBidPrice" name="minBidPrice" required>
+
+        <label for="auctionEndDate">Auction End Date</label>
+        <input type="datetime-local" id="auctionEndDate" name="auctionEndDate" required>
+
+        <label for="itemPhoto">Upload Photo</label>
+        <input type="file" id="itemPhoto" name="itemPhoto" accept="image/*" required>
+
+        <button id="bidSubmit" type="submit">List for Bidding</button>
+
+        <div id="message"></div>
+    </form>
+    <script src="bidding.js"></script>
+</body>
+</html>
