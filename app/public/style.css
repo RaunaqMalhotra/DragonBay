@@ -1,0 +1,86 @@
+/* Basic reset and styling */
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	background-color: #f4f4f9;
+}
+
+h1 {
+	text-align: center;
+	color: rgb(38, 37, 37);
+}
+
+h2 {
+	text-align: center;
+	color: #333;
+}
+
+label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+button {
+	width: 100%;
+	padding: 10px;
+	font-size: 16px;
+	color: #fff;
+	background-color: #007bff;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+button:hover {
+	background-color: #ebb70c;
+	color: black;
+}
+
+input[type="text"],
+input[type="number"],
+textarea {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #020202;
+	border-radius: 3px;
+	font-size: 16px;
+}
+
+input[type="file"] {
+	padding: 5px 0;
+}
+
+.container {
+	max-width: 1000px;
+	width: 100%;
+	padding: 20px;
+	background-color: #fff;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+	margin-bottom: 15px;
+}
+
+.form {
+	padding: 1rem;
+	margin: 2rem 0;
+	border: 1px solid #020202;
+}
+.form label {
+	font-weight: bold;
+}
+.form div {
+	margin: 1rem 0;
+}
+
+#message {
+	margin: 1rem 0;
+}
