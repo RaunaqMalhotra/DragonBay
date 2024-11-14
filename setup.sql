@@ -10,7 +10,7 @@ CREATE DATABASE dragonbay;
 -- Create Users table
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
-    username VARCHAR(50),
+    username VARCHAR(50) UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -58,4 +58,16 @@ CREATE TABLE Bids (
     user_id INT REFERENCES Users(user_id),
     bid_amount NUMERIC NOT NULL,
     bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Messages table to store messages between users
+CREATE TABLE Messages (
+    message_id SERIAL PRIMARY KEY,
+    room_id VARCHAR(100) UNIQUE NOT NULL,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message_text TEXT NOT NULL,
+    message_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES Users(user_id),
+    FOREIGN KEY (receiver_id) REFERENCES Users(user_id)
 );
