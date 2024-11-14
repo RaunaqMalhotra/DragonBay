@@ -126,12 +126,6 @@ async function validateSignUp(body) {
   return true;
 }
 
-// Serve the login.html page
-app.get("/", (req, res) => {
-  // Re-direct "/" to login.html
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
-});
-
 // Endpoint to handle form submission and insert listing into database
 app.post("/add-listing", (req, res) => {
   const { name, description, price, tags, photo } = req.body;
