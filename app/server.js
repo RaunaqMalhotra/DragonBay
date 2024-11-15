@@ -21,7 +21,7 @@ pool.connect().then(function () {
   console.error("Database connection error:", error);
 });
 
-app.use(express.static("public"));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -31,8 +31,22 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
 });
 
+app.use(express.static("public"));
+
+/* middleware; check if login token in token storage, if not, 403 response */
+let authorize = (req, res, next) => {
+  let { token } = req.cookies;
+  console.log(token, tokenStorage);
+  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+    return res.sendStatus(403); // TODO
+  }
+  next();
+};
+
+
+//TODO choose where to put the middleware 'authorize'
 // Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", (req, res) => {
+app.post("/add-listing", authorize, (req, res) => {
   const { name, description, price, tags, photo } = req.body;
 
   // Insert data into the Listings table
@@ -301,15 +315,6 @@ app.post("/login", async (req, res) => {
   return res.cookie("token", token, cookieOptions).send(); // TODO
 });
 
-/* middleware; check if login token in token storage, if not, 403 response */
-let authorize = (req, res, next) => {
-  let { token } = req.cookies;
-  console.log(token, tokenStorage);
-  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-    return res.sendStatus(403); // TODO
-  }
-  next();
-};
 
 // End point to log out a user
 app.post("/logout", (req, res) => {
