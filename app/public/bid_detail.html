@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Details</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Auction Details</h1>
+    <div id="auctionDetails"></div>
+    <h2>Current Bids</h2>
+    <ul id="bidList"></ul>
+    <h2>Place Your Bid</h2>
+    <form id="bidForm">
+        <label for="bidAmount">Bid Amount ($):</label>
+        <input type="number" id="bidAmount" name="bidAmount" required>
+        <button type="submit">Place Bid</button>
+    </form>
+    <p id="message"></p>
+    <script src="bid_detail.js"></script>
+</body>
+</html>
