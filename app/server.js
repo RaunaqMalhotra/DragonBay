@@ -43,6 +43,35 @@ let authorize = (req, res, next) => {
   next();
 };
 
+app.get('/profile', authorize, (req, res) => {
+  const username = tokenStorage[req.cookies.token]; // Get username from tokenStorage
+
+  pool.query('SELECT username, email FROM users WHERE username = $1', [username])
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(404).json({ error: "User not found" });
+          }
+          res.json(result.rows[0]); // Send username and email
+      })
+      .catch(err => {
+          console.error(err);
+          res.status(500).json({ error: "Database error" });
+      });
+});
+
+app.post('/profile/update-password', authorize, async (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+  const { newPassword } = req.body;
+
+  try {
+      const hashedPassword = await argon2.hash(newPassword);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hashedPassword, username]);
+      res.json({ message: "Password updated successfully!" });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to update password" });
+  }
+});
 
 //TODO choose where to put the middleware 'authorize'
 // Endpoint to handle form submission and insert listing into database
