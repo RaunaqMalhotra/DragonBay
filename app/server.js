@@ -358,6 +358,26 @@ app.get("/auctions", (req, res) => {
     });
 });
 
+// Endpoint to fetch details of a specific auction
+app.get("/auction/:id", (req, res) => {
+  let listingId = req.params.id;
+
+  pool.query(
+    `SELECT * FROM Listings WHERE listing_id = $1 AND is_auction = true`,
+    [listingId]
+  )
+    .then(result => {
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Auction not found" });
+      }
+      res.json(result.rows[0]);
+    })
+    .catch(err => {
+      console.error("Error fetching auction details:", err);
+      res.status(500).json({ error: "Database error" });
+    });
+});
+
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
 });
