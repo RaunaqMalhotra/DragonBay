@@ -75,8 +75,8 @@ app.post('/profile/update-password', authorize, async (req, res) => {
 
 //TODO choose where to put the middleware 'authorize'
 // Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", authorize, (req, res) => {
-  const { name, description, price, tags, photo } = req.body;
+app.post("/add-listing", (req, res) => {
+  let { name, description, price, tags, photo } = req.body;
 
   // Insert data into the Listings table
   pool.query(
@@ -97,7 +97,7 @@ app.post("/add-listing", authorize, (req, res) => {
       ).then(() => {
         return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
       }).then(tagResult => {
-        const tagId = tagResult.rows[0].tag_id;
+        let tagId = tagResult.rows[0].tag_id;
         return pool.query(
           `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
           [listingId, tagId]
@@ -171,7 +171,7 @@ async function validateSignUp(body) {
 
 // Endpoint to handle form submission and insert listing into database
 app.post("/add-listing", (req, res) => {
-  const { name, description, price, tags, photo } = req.body;
+  let { name, description, price, tags, photo } = req.body;
 
   // Insert data into the Listings table
   pool.query(
@@ -192,7 +192,7 @@ app.post("/add-listing", (req, res) => {
       ).then(() => {
         return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
       }).then(tagResult => {
-        const tagId = tagResult.rows[0].tag_id;
+        let tagId = tagResult.rows[0].tag_id;
         return pool.query(
           `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
           [listingId, tagId]
@@ -239,7 +239,7 @@ app.post("/add-bid-listing", (req, res) => {
 // Endpoint to fetch all non-auction listings
 app.get("/api/listings", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM Listings WHERE is_auction = false");
+    let result = await pool.query("SELECT * FROM Listings WHERE is_auction = false");
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching listings:", err);
@@ -250,9 +250,9 @@ app.get("/api/listings", async (req, res) => {
 
 // Endpoint to fetch a single listing by ID
 app.get("/api/listings/:id", async (req, res) => {
-  const listingId = req.params.id;
+  let listingId = req.params.id;
   try {
-    const result = await pool.query("SELECT * FROM Listings WHERE listing_id = $1", [listingId]);
+    let result = await pool.query("SELECT * FROM Listings WHERE listing_id = $1", [listingId]);
     if (result.rows.length > 0) {
       res.json(result.rows[0]);
     } else {
@@ -374,6 +374,42 @@ app.get("/public", (req, res) => {
 // authorize will only pass control to this request handler if the user passes authorization
 app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
+});
+
+// End point to get auction items from DB
+app.get("/auctions", (req, res) => {
+  console.log("calling /auctions");
+
+  pool.query(
+    "SELECT * FROM Listings WHERE is_auction = true AND status = 'open' ORDER BY auction_end_date ASC"
+  )
+    .then(result => {
+      res.json(result.rows);
+    })
+    .catch(err => {
+      console.error("Error fetching auctions:", err);
+      res.status(500).json({ error: "Database error" });
+    });
+});
+
+// Endpoint to fetch details of a specific auction
+app.get("/auction/:id", (req, res) => {
+  let listingId = req.params.id;
+
+  pool.query(
+    `SELECT * FROM Listings WHERE listing_id = $1 AND is_auction = true`,
+    [listingId]
+  )
+    .then(result => {
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Auction not found" });
+      }
+      res.json(result.rows[0]);
+    })
+    .catch(err => {
+      console.error("Error fetching auction details:", err);
+      res.status(500).json({ error: "Database error" });
+    });
 });
 
 app.listen(port, hostname, () => {
