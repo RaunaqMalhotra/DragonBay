@@ -168,3 +168,22 @@ textarea {
     font-weight: bold;
     text-align: center;
 }
+.message-container {
+    width: 80%;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.message-preview {
+    border: 2px solid #dedede;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    border-color: black;
+    padding: 10px;
+    margin: 10px 0;
+}
+.message-preview h3 {
+    margin: 0;
+    font-size: 1.2em;
+}
