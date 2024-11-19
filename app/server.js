@@ -5,9 +5,13 @@ const app = express();
 const argon2 = require("argon2"); 
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
+const { Server } = require('socket.io');
+const path = require('path');
+const cors = require('cors');
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 const hostname = "localhost";
+const ADMIN = "Admin";
 
 const env = require("../config/env.json");
 const Pool = pg.Pool;
@@ -24,6 +28,22 @@ pool.connect().then(function () {
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());
+
+//state 
+const UsersState = {
+  users: [],
+  setUsers: function(newUsersArray) {
+      this.users = newUsersArray;
+  }
+};
+
+const ioServer = new Server(expressServer, {
+  cors: {
+      origin: '*'
+  }
+});
 
 // Serve the login.html page
 app.get("/", (req, res) => {
@@ -341,6 +361,133 @@ app.get("/public", (req, res) => {
 app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
 });
+
+//Websockets endpoint for when user connects to server for messsaging
+ioServer.on('connection', (socket) => {
+  console.log(`User ${socket.id} connected`);
+
+  socket.on('enterRoom', ({ name, room }) => {
+      console.log(`User ${socket.id} is entering room ${room} with name ${name}`);
+      
+      //leave previous room
+      const prevRoom = getUser(socket.id)?.room;
+
+      if (prevRoom) {
+          socket.leave(prevRoom);
+      }
+
+      const user = activateUser(socket.id, name, room);
+
+      //updates previous room's user list
+      if (prevRoom) {
+          ioServer.to(prevRoom).emit('userList', {
+              users: getUsersInRoom(prevRoom)
+          });
+      }
+
+      //join room
+      socket.join(user.room);
+      console.log(`User ${socket.id} joined room ${user.room}`);
+
+      //send to user that joins
+      socket.emit('message', buildMsg(ADMIN, `You have joined the ${user.room} chat room`));
+      
+      //to everyone else
+      socket.broadcast.to(user.room).emit('message', buildMsg(ADMIN, `${user.name} has joined the room`));
+
+      //update user list for new room
+      ioServer.to(user.room).emit('userList', {
+          users: getUsersInRoom(user.room)
+      });
+
+      //update active rooms list for everyone
+      ioServer.emit('roomlist', {
+          rooms: getAllActiveRooms()
+      });
+  });
+
+  //Websockets endpoint for when user disconnects from server
+  socket.on('disconnect', () => {
+      const user = getUser(socket.id);
+      userExitsChat(socket.id);
+  
+      if (user) {
+          ioServer.to(user.room).emit('message', buildMsg(ADMIN, `${user.name} has left the room`));
+
+          ioServer.to(user.room).emit('userList', {
+              users: getUsersInRoom(user.room)
+          });
+
+          ioServer.emit('roomList', {
+              rooms: getAllActiveRooms()
+          });
+      }
+  });
+
+  //Websockets endpoint for when user sends a message
+  socket.on('message', ({ name, text }) => {
+      const room = getUser(socket.id)?.room;
+      if (room) {
+          ioServer.to(room).emit('message', buildMsg(name, text));
+      }
+  });
+
+  //Websockets endpoint for detecting user typing activity
+  socket.on('activity', (name) => {
+      const room = getUser(socket.id)?.room;
+      if (room) {
+          socket.broadcast.to(room).emit('activity', name);
+      }
+  });
+});
+
+//function to build message object for transmission
+function buildMsg(name, text) {
+  return {
+      name,
+      text,
+      time: new Intl.DateTimeFormat('default', {
+          hour: 'numeric',
+          minute: 'numeric', 
+          second: 'numeric'
+      }).format(new Date())
+  };
+}
+
+//functions to manage users (and user state)
+
+//create user object and amend user state
+function activateUser(id, name, room) {
+  const user = { id, name, room };
+  UsersState.setUsers([
+      ...UsersState.users.filter(user => user.id !== id), 
+      user
+  ]);
+  console.log(`User activated: ${JSON.stringify(user)}`);
+  return user;
+}
+
+//amend user state by removing user
+function userExitsChat(id) {
+  UsersState.setUsers(
+      UsersState.users.filter(user => user.id !== id)
+  );
+}
+
+//get user object by id
+function getUser(id) {
+  return UsersState.users.find(user => user.id === id);
+}
+
+//get all users in a room
+function getUsersInRoom(room) {
+  return UsersState.users.filter(user => user.room === room);
+}
+
+//get all active rooms
+function getAllActiveRooms() {
+  return Array.from(new Set(UsersState.users.map(user => user.room)));
+}
 
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
