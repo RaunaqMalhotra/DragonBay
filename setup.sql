@@ -63,7 +63,7 @@ CREATE TABLE Bids (
 -- Create Messages table to store messages between users
 CREATE TABLE Messages (
     message_id SERIAL PRIMARY KEY,
-    room_id VARCHAR(100) UNIQUE NOT NULL,
+    room VARCHAR(100) UNIQUE NOT NULL,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     message_text TEXT NOT NULL,

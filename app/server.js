@@ -426,9 +426,42 @@ ioServer.on('connection', (socket) => {
 
   //Websockets endpoint for when user sends a message
   socket.on('message', ({ name, text }) => {
-      const room = getUser(socket.id)?.room;
-      if (room) {
-          ioServer.to(room).emit('message', buildMsg(name, text));
+      if (name !== ADMIN) {
+        const room = getUser(socket.id)?.room;
+        if (room) {
+          const msg = buildMsg(name, text);
+          const room_members = getUsersInRoom(room);
+          const sender = room_members.find(user => user.name === name);
+          const receiver = room_members.find(user => user.name !== name);
+          pool.query(
+            `SELECT user_id 
+            FROM Users 
+            WHERE username IN ($1, $2);`,
+            [sender, receiver]
+          ).then(result => {
+            if (result.rows.length != 2) {
+              throw new Error("Issue retrieving user IDs");
+            }
+            const sender_id = result.rows.find(row => row.username === sender).user_id;
+            const receiver_id = result.rows.find(row => row.username === receiver).user_id;
+            return pool.query(
+              `INSERT INTO Messages (room, sender_id, receiver_id, message_text, message_timestamp) 
+              VALUES ($1, $2, $3, $4, $5);`, 
+              [room, sender_id, receiver_id, msg.text, msg.time]
+            );
+          }).then(() => {
+            ioServer.to(room).emit('message', msg);
+          }).catch(error => {
+            console.error("Error inserting message:", error);
+            res.status(500).json({ message: "Failed to save message" });
+          });
+        }
+      } else {
+        const msg = buildMsg(name, text);
+        const room = getUser(socket.id)?.room;
+        if (room) {
+          ioServer.to(room).emit('message', msg);
+        }
       }
   });
 
