@@ -31,17 +31,30 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
 });
 
-app.use(express.static("public"));
 
-/* middleware; check if login token in token storage, if not, 403 response */
+/* middleware; check if login token in token storage, if not, redirect to login page */
 let authorize = (req, res, next) => {
   let { token } = req.cookies;
   console.log(token, tokenStorage);
   if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-    return res.sendStatus(403); // TODO
+    return res.redirect('/login.html');
   }
   next();
 };
+
+app.get('/listing.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'listing.html'));
+});
+
+app.get('/profile.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+app.get('/product.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'product.html'));
+});
+
+app.use(express.static("public"));
 
 app.get('/profile', authorize, (req, res) => {
   const username = tokenStorage[req.cookies.token]; // Get username from tokenStorage
@@ -170,7 +183,7 @@ async function validateSignUp(body) {
 }
 
 // Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", (req, res) => {
+app.post("/add-listing", authorize, (req, res) => {
   let { name, description, price, tags, photo } = req.body;
 
   // Insert data into the Listings table
@@ -298,6 +311,10 @@ app.post("/create", async (req, res) => {
   // automatically log people in when they create account
 
   return res.status(200).send(); 
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'login.html')); // Adjust the path as needed
 });
 
 // End point to log in a user
