@@ -5,6 +5,11 @@ const app = express();
 const argon2 = require("argon2"); 
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
+const cors = require("cors"); // Import cors
+const http = require('http'); // To create the server
+const { Server } = require('socket.io'); // Import Socket.IO
+
+const server = http.createServer(app); // Create HTTP server
 
 const port = 3000;
 const hostname = "localhost";
@@ -13,6 +18,8 @@ const env = require("../config/env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
 
+// Store connected users
+let connectedClients = [];
 let tokenStorage = {};
 
 pool.connect().then(function () {
@@ -24,6 +31,29 @@ pool.connect().then(function () {
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors());
+
+const ioServer = new Server(server, {
+  cors: {
+    origin: '*', // Allow requests from frontend
+    methods: ["GET", "POST"],
+  },
+});
+
+// Socket.IO logic
+ioServer.on("connection", (socket) => {
+  console.log("New client connected:", socket.id);
+
+  socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+  });
+
+  socket.on("new-bid", (bid) => {
+      console.log("New bid received:", bid);
+      ioServer.emit("bid-update", bid); // Broadcast bid to all connected clients
+  });
+});
+
 
 // Serve the login.html page
 app.get("/", (req, res) => {
@@ -125,49 +155,6 @@ async function validateSignUp(body) {
   }
   return true;
 }
-
-// Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", (req, res) => {
-  let { name, description, price, tags, photo } = req.body;
-
-  // Insert data into the Listings table
-  pool.query(
-    `INSERT INTO Listings (title, description, price, listing_date, status) 
-    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
-    [name, description, price]
-  )
-  .then(result => {
-    let listingId = result.rows[0].listing_id;
-
-    // Insert tags if needed (chaining promises)
-    let tagPromises = tags.map(tag => {
-      return pool.query(
-        `INSERT INTO Tags (tag_name) 
-        VALUES ($1) 
-        ON CONFLICT (tag_name) DO NOTHING`,
-        [tag]
-      ).then(() => {
-        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
-      }).then(tagResult => {
-        let tagId = tagResult.rows[0].tag_id;
-        return pool.query(
-          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
-          [listingId, tagId]
-        );
-      });
-    });
-
-    // Execute all tag insertion promises
-    return Promise.all(tagPromises);
-  })
-  .then(() => {
-    res.status(200).json({ message: "Listing added successfully" });
-  })
-  .catch(error => {
-    console.error("Error inserting listing:", error);
-    res.status(500).json({ message: "Failed to add listing" });
-  });
-});
 
 // Endpoint to handle bid form submission and insert bid listing into database
 app.post("/add-bid-listing", (req, res) => {
@@ -378,6 +365,40 @@ app.get("/auction/:id", (req, res) => {
     });
 });
 
+// End point to place a bid
+app.post("/place-bid", (req, res) => {
+  let { listingId, userId, bidAmount } = req.body;
+
+  pool.query(`SELECT minimum_bid FROM Listings WHERE listing_id = $1`, [listingId])
+    .then((result) => {
+      if (result.rows.length === 0) throw new Error("Listing not found");
+
+      let minimumBid = result.rows[0].minimum_bid;
+      if (bidAmount < minimumBid) throw new Error("Bid amount is too low");
+
+      return pool.query(
+        `INSERT INTO Bids (listing_id, user_id, bid_amount, bid_time) VALUES ($1, $2, $3, NOW()) RETURNING *`,
+        [listingId, userId, bidAmount]
+      );
+    })
+    .then((result) => {
+      let bid = result.rows[0];
+      ioServer.emit("bid-update", bid); // Notify all connected clients
+      res.status(200).json({ success: true, bid });
+    })
+    .catch((err) => {
+      console.error("Error placing bid:", err);
+      res.status(500).json({ success: false, message: err.message });
+    });
+});
+
+// Start the server
+server.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
+/*
 app.listen(port, hostname, () => {
   console.log(`Listening at: http://${hostname}:${port}`);
 });
+*/
