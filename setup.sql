@@ -25,6 +25,7 @@ CREATE TABLE Listings (
     price NUMERIC,
     minimum_bid NUMERIC,
     current_max_bid NUMERIC,
+    minimum_increase NUMERIC,
     listing_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     category TEXT,
     is_auction BOOLEAN DEFAULT FALSE, -- Indicates if listing is for auction

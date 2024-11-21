@@ -158,12 +158,12 @@ async function validateSignUp(body) {
 
 // Endpoint to handle bid form submission and insert bid listing into database
 app.post("/add-bid-listing", (req, res) => {
-  let { name, description, minimumBid, auctionEndDate, photo } = req.body;
+  let { name, description, minimumBid, minimumIncrease, auctionEndDate, photo } = req.body;
 
   pool.query(
-      `INSERT INTO Listings (title, description, minimum_bid, current_max_bid, listing_date, auction_end_date, status, is_auction) 
-      VALUES ($1, $2, $3, $4, NOW(), $5, 'open', TRUE) RETURNING listing_id`,
-      [name, description, minimumBid, minimumBid, auctionEndDate]
+      `INSERT INTO Listings (title, description, minimum_bid, current_max_bid, minimum_increase, listing_date, auction_end_date, status, is_auction) 
+      VALUES ($1, $2, $3, $4, $5, NOW(), $6, 'open', TRUE) RETURNING listing_id`,
+      [name, description, minimumBid, minimumBid, minimumIncrease, auctionEndDate]
   )
   .then(result => {
       let listingId = result.rows[0].listing_id;
@@ -381,7 +381,7 @@ app.post("/place-bid", (req, res) => {
   const { listingId, userId, bidAmount } = req.body;
 
   pool.query(
-    `SELECT minimum_bid, current_max_bid FROM Listings WHERE listing_id = $1`,
+    `SELECT minimum_bid, current_max_bid, minimum_increase FROM Listings WHERE listing_id = $1`,
     [listingId]
   )
     .then((listingResult) => {
@@ -389,7 +389,7 @@ app.post("/place-bid", (req, res) => {
         throw new Error("Listing not found");
       }
 
-      const { minimum_bid: minimumBid, current_max_bid: currentMaxBid } = listingResult.rows[0];
+      const { minimum_bid: minimumBid, current_max_bid: currentMaxBid, minimum_increase: minimumIncrease } = listingResult.rows[0];
 
       // Validate against the minimum and maximum bids
       if (bidAmount < minimumBid) {
@@ -397,6 +397,14 @@ app.post("/place-bid", (req, res) => {
       }
       if (bidAmount <= currentMaxBid) {
         throw new Error(`Bid must be higher than the current maximum bid of $${currentMaxBid}`);
+      }
+      let difference = bidAmount - currentMaxBid;
+      console.log(bidAmount);
+      console.log(currentMaxBid);
+      console.log(minimumIncrease);
+      console.log(difference);
+      if (difference < minimumIncrease) {
+        throw new Error(`Bid must be at least $${minimumIncrease} greater than $${currentMaxBid}`);
       }
 
       // Step 2: Insert the new bid into the database
