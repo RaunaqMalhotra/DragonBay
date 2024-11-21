@@ -28,35 +28,48 @@ socket.on('reconnect', (attemptNumber) => {
 });
 
 // Fetch and display auction details
-fetchAuctionDetails();
-
 function fetchAuctionDetails() {
     fetch(`/auction/${auctionId}`)
-    .then(response => response.json())
-    .then(auction => {
-        const auctionDetails = document.getElementById('auctionDetails');
-        if (auction.error) {
-            auctionDetails.innerHTML = `<p>${auction.error}</p>`;
-            document.getElementById('bidForm').style.display = 'none';
-            return;
-        }
-        auctionDetails.innerHTML = `
-            <h3>${auction.title}</h3>
-            <p>${auction.description}</p>
-            <p id="minimumBid" data-value="${auction.minimum_bid}">Minimum Bid: $${auction.minimum_bid}</p>
-            <p>Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
-        `;
-        /*
-        if (new Date() > new Date(auction.auction_end_date)) {
-            document.getElementById('bidForm').style.display = 'none';
-            showMessage('error', 'This auction has ended.');
-        }
-        */
-    })
-    .catch(error => {
-        console.error('Error fetching auction details:', error);
-        document.getElementById('auctionDetails').innerHTML = '<p>Error loading auction details.</p>';
-    });
+        .then(response => response.json())
+        .then(auction => {
+            let auctionDetails = document.getElementById('auctionDetails');
+            let bidList = document.getElementById('bidList');
+
+            if (auction.error) {
+                auctionDetails.innerHTML = `<p>${auction.error}</p>`;
+                document.getElementById('bidForm').style.display = 'none';
+                return;
+            }
+
+            // Display auction details
+            auctionDetails.innerHTML = `
+                <h3>${auction.title}</h3>
+                <p>${auction.description}</p>
+                <p id="minimumBid" data-value="${auction.minimum_bid}">Minimum Bid: $${auction.minimum_bid}</p>
+                <p>Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
+            `;
+
+            // Hide bid form if auction has ended
+            if (new Date() > new Date(auction.auction_end_date)) {
+                document.getElementById('bidForm').style.display = 'none';
+                showMessage('error', 'This auction has ended.');
+            }
+
+            // Display current bids
+            if (auction.bids && auction.bids.length > 0) {
+                auction.bids.forEach(bid => {
+                    let listItem = document.createElement('li');
+                    listItem.textContent = `User ${bid.user_id}: $${bid.bid_amount}`;
+                    bidList.appendChild(listItem);
+                });
+            } else {
+                bidList.innerHTML = "<li>No bids yet</li>";
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching auction details:', error);
+            document.getElementById('auctionDetails').innerHTML = '<p>Error loading auction details.</p>';
+        });
 }
 
 // Handle real-time bid updates
@@ -79,14 +92,6 @@ document.getElementById('bidForm').addEventListener('submit', (event) => {
     const submitButton = event.target.querySelector('button[type="submit"]');
     const bidAmount = parseFloat(document.getElementById('bidAmount').value);
 
-    const minBid = parseFloat(document.getElementById('minimumBid').dataset.value);
-    const highestBid = parseFloat(document.getElementById('highestBid')?.dataset.value || 0);
-
-    if (bidAmount < minBid || bidAmount <= highestBid) {
-        showMessage('error', 'Bid must be higher than the current highest bid or minimum bid.');
-        return;
-    }
-
     submitButton.disabled = true;
 
     fetch('/place-bid', {
@@ -99,6 +104,10 @@ document.getElementById('bidForm').addEventListener('submit', (event) => {
         if (result.success) {
             showMessage('success', 'Bid placed successfully!');
             document.getElementById('bidForm').reset();
+            // Clear the message after 5 seconds
+            setTimeout(() => {
+                showMessage('', ''); // Clear the message
+            }, 3000);
         } else {
             showMessage('error', result.message);
         }
@@ -116,9 +125,6 @@ function showMessage(type, text) {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
     messageEl.className = type === 'success' ? 'success' : 'error';
-
-    setTimeout(() => {
-        messageEl.textContent = '';
-        messageEl.className = '';
-    }, 3000);
 }
+
+fetchAuctionDetails();

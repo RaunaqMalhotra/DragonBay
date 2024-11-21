@@ -161,9 +161,9 @@ app.post("/add-bid-listing", (req, res) => {
   let { name, description, minimumBid, auctionEndDate, photo } = req.body;
 
   pool.query(
-      `INSERT INTO Listings (title, description, minimum_bid, listing_date, auction_end_date, status, is_auction) 
-      VALUES ($1, $2, $3, NOW(), $4, 'open', TRUE) RETURNING listing_id`,
-      [name, description, minimumBid, auctionEndDate]
+      `INSERT INTO Listings (title, description, minimum_bid, current_max_bid, listing_date, auction_end_date, status, is_auction) 
+      VALUES ($1, $2, $3, $4, NOW(), $5, 'open', TRUE) RETURNING listing_id`,
+      [name, description, minimumBid, minimumBid, auctionEndDate]
   )
   .then(result => {
       let listingId = result.rows[0].listing_id;
@@ -350,45 +350,82 @@ app.get("/auction/:id", (req, res) => {
   let listingId = req.params.id;
 
   pool.query(
-    `SELECT * FROM Listings WHERE listing_id = $1 AND is_auction = true`,
-    [listingId]
+      `SELECT * FROM Listings WHERE listing_id = $1 AND is_auction = true`,
+      [listingId]
   )
-    .then(result => {
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Auction not found" });
-      }
-      res.json(result.rows[0]);
-    })
-    .catch(err => {
-      console.error("Error fetching auction details:", err);
-      res.status(500).json({ error: "Database error" });
-    });
+      .then(auctionResult => {
+          if (auctionResult.rows.length === 0) {
+              // No auction found
+              return res.status(404).json({ error: "Auction not found" });
+          }
+
+          let auction = auctionResult.rows[0]; // Get auction details
+
+          // Fetch associated bids
+          return pool.query(
+              `SELECT user_id, bid_amount, bid_time FROM Bids WHERE listing_id = $1 ORDER BY bid_time DESC`,
+              [listingId]
+          ).then(bidsResult => {
+              auction.bids = bidsResult.rows; // Add bids to auction
+              res.json(auction); // Send response
+          });
+      })
+      .catch(err => {
+          console.error("Error fetching auction details or bids:", err);
+          res.status(500).json({ error: "Database error" });
+      });
 });
 
 // End point to place a bid
 app.post("/place-bid", (req, res) => {
-  let { listingId, userId, bidAmount } = req.body;
+  const { listingId, userId, bidAmount } = req.body;
 
-  pool.query(`SELECT minimum_bid FROM Listings WHERE listing_id = $1`, [listingId])
-    .then((result) => {
-      if (result.rows.length === 0) throw new Error("Listing not found");
+  pool.query(
+    `SELECT minimum_bid, current_max_bid FROM Listings WHERE listing_id = $1`,
+    [listingId]
+  )
+    .then((listingResult) => {
+      if (listingResult.rows.length === 0) {
+        throw new Error("Listing not found");
+      }
 
-      let minimumBid = result.rows[0].minimum_bid;
-      if (bidAmount < minimumBid) throw new Error("Bid amount is too low");
+      const { minimum_bid: minimumBid, current_max_bid: currentMaxBid } = listingResult.rows[0];
 
+      // Validate against the minimum and maximum bids
+      if (bidAmount < minimumBid) {
+        throw new Error(`Bid amount must be at least $${minimumBid}`);
+      }
+      if (bidAmount <= currentMaxBid) {
+        throw new Error(`Bid must be higher than the current maximum bid of $${currentMaxBid}`);
+      }
+
+      // Step 2: Insert the new bid into the database
       return pool.query(
         `INSERT INTO Bids (listing_id, user_id, bid_amount, bid_time) VALUES ($1, $2, $3, NOW()) RETURNING *`,
         [listingId, userId, bidAmount]
       );
     })
-    .then((result) => {
-      let bid = result.rows[0];
-      ioServer.emit("bid-update", bid); // Notify all connected clients
-      res.status(200).json({ success: true, bid });
+    .then((insertResult) => {
+      const newBid = insertResult.rows[0];
+
+      // Step 3: Update the max_bid in the Listings table
+      return pool.query(
+        `UPDATE Listings SET current_max_bid = $1 WHERE listing_id = $2`,
+        [bidAmount, listingId]
+      ).then(() => newBid); // Pass the newBid along
+    })
+    .then((newBid) => {
+      // Notify all connected clients of the new bid
+      ioServer.emit("bid-update", newBid);
+
+      // Respond with success
+      res.status(200).json({ success: true, bid: newBid });
     })
     .catch((err) => {
       console.error("Error placing bid:", err);
-      res.status(500).json({ success: false, message: err.message });
+
+      // Respond with a user-friendly error message
+      res.status(400).json({ success: false, message: err.message });
     });
 });
 
