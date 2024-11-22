@@ -64,8 +64,8 @@ CREATE TABLE Bids (
 CREATE TABLE Messages (
     message_id SERIAL PRIMARY KEY,
     room VARCHAR(100) UNIQUE NOT NULL,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
+    sender INT NOT NULL,
+    receiver INT NOT NULL,
     message_text TEXT NOT NULL,
     message_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES Users(user_id),

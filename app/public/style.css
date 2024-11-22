@@ -187,3 +187,22 @@ textarea {
     margin: 0;
     font-size: 1.2em;
 }
+.message-preview p {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+}
+.message-preview-time span {
+    font-size: 0.8em;
+    color: #666;
+    text-align: left
+}
+.message-preview-text span {
+    text-align: right;
+}
+.message-preview-none {
+    text-align: center;
+    color: #000000;
+    font-weight: bold;
+    font-style: italic;
+}

@@ -362,6 +362,7 @@ app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
 });
 
+app.get("/messages/:username", async (req, res) => {
 //Websockets endpoint for when user connects to server for messsaging
 ioServer.on('connection', (socket) => {
   console.log(`User ${socket.id} connected`);
@@ -434,7 +435,6 @@ ioServer.on('connection', (socket) => {
           const sender = room_members.find(user => user.name === name);
           const receiver = room_members.find(user => user.name !== name);
           pool.query(
-            `SELECT user_id 
             FROM Users 
             WHERE username IN ($1, $2);`,
             [sender, receiver]
@@ -450,6 +450,7 @@ ioServer.on('connection', (socket) => {
               [room, sender_id, receiver_id, msg.text, msg.time]
             );
           }).then(() => {
+              [room, sender, receiver, msg.text, msg.time]
             ioServer.to(room).emit('message', msg);
           }).catch(error => {
             console.error("Error inserting message:", error);
@@ -457,9 +458,9 @@ ioServer.on('connection', (socket) => {
           });
         }
       } else {
-        const msg = buildMsg(name, text);
         const room = getUser(socket.id)?.room;
         if (room) {
+          const msg = buildMsg(name, text);
           ioServer.to(room).emit('message', msg);
         }
       }
