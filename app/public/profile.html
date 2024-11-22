@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <h1>Your Profile</h1>
+    <div>
+        <p><strong>Username:</strong> <span id="username"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+    </div>
+    <form onsubmit="updatePassword(event)">
+        <label for="password">New Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">Change Password</button>
+    </form>
+    <script src="profile.js"></script>
+    <script src="navbar.js"></script>
+
+</body>
+</html>
