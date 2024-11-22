@@ -31,6 +31,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
 
+app.use((req, res, next) => {
+  const token = req.cookies.token;
+  if (token && tokenStorage[token]) {
+      req.username = tokenStorage[token];
+  }
+  next();
+});
+
 //state 
 const UsersState = {
   users: [],
@@ -228,10 +236,17 @@ app.get("/api/listings", async (req, res) => {
 // Endpoint to fetch a single listing by ID
 app.get("/api/listings/:id", async (req, res) => {
   const listingId = req.params.id;
+  const account_username = req.username;
   try {
-    const result = await pool.query("SELECT * FROM Listings WHERE listing_id = $1", [listingId]);
+    const result = await pool.query(
+      `SELECT l.*, u.username AS seller_username
+      FROM Listings l 
+      LEFT JOIN Users u 
+      ON l.user_id = u.user_id
+      WHERE listing_id = $1`,
+      [listingId]);
     if (result.rows.length > 0) {
-      res.json(result.rows[0]);
+      res.json({...result.rows[0], account_username});
     } else {
       res.status(404).json({ error: "Listing not found" });
     }
@@ -363,6 +378,27 @@ app.get("/private", authorize, (req, res) => {
 });
 
 app.get("/messages/:username", async (req, res) => {
+  const username = req.params.username;
+  try {
+    const receivers = await pool.query(`SELECT DISTINCT receiver FROM Messages WHERE sender = $1`, [username]);
+    if (receivers.rows.length > 0) {
+      const recentMessages = await pool.query(
+        `SELECT * 
+        FROM Messages 
+        WHERE sender = $1 
+        AND receiver = $2 
+        ORDER BY message_timestamp DESC LIMIT 1`,
+        [username, receivers.rows]);
+      return res.json(recentMessages.rows);
+    } else {
+      res.send("No messages found");
+    }
+  } catch (error) {
+    console.error("Error fetching messages for preview:", error);
+    res.status(500).json({message: "Failed to fetch messages"});
+  }
+});
+
 //Websockets endpoint for when user connects to server for messsaging
 ioServer.on('connection', (socket) => {
   console.log(`User ${socket.id} connected`);
@@ -435,22 +471,10 @@ ioServer.on('connection', (socket) => {
           const sender = room_members.find(user => user.name === name);
           const receiver = room_members.find(user => user.name !== name);
           pool.query(
-            FROM Users 
-            WHERE username IN ($1, $2);`,
-            [sender, receiver]
-          ).then(result => {
-            if (result.rows.length != 2) {
-              throw new Error("Issue retrieving user IDs");
-            }
-            const sender_id = result.rows.find(row => row.username === sender).user_id;
-            const receiver_id = result.rows.find(row => row.username === receiver).user_id;
-            return pool.query(
-              `INSERT INTO Messages (room, sender_id, receiver_id, message_text, message_timestamp) 
+              `INSERT INTO Messages (room, sender, receiver, message_text, message_timestamp) 
               VALUES ($1, $2, $3, $4, $5);`, 
-              [room, sender_id, receiver_id, msg.text, msg.time]
-            );
-          }).then(() => {
               [room, sender, receiver, msg.text, msg.time]
+          ).then(() => {
             ioServer.to(room).emit('message', msg);
           }).catch(error => {
             console.error("Error inserting message:", error);
