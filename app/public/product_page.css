@@ -168,7 +168,7 @@ nav {
   }
 }
 
-.product-description {
+.description {
   border-top: 0.0625rem solid var(--gray);
   margin: 2rem 0;
   padding: 1rem 0 0 0;
@@ -208,7 +208,7 @@ nav {
   }
 }
 
-.product-details-container {
+.container {
   margin: auto;
   padding: 0 1rem;
   max-width: 75rem;
