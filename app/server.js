@@ -28,7 +28,7 @@ pool.connect().then(function () {
   console.error("Database connection error:", error);
 });
 
-app.use(express.static("public"));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
@@ -61,6 +61,62 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
 });
 
+
+/* middleware; check if login token in token storage, if not, redirect to login page */
+let authorize = (req, res, next) => {
+  let { token } = req.cookies;
+  console.log(token, tokenStorage);
+  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+    return res.redirect('/login.html');
+  }
+  next();
+};
+
+app.get('/listing.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'listing.html'));
+});
+
+app.get('/profile.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+app.get('/product.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'product.html'));
+});
+
+app.use(express.static("public"));
+
+app.get('/profile', authorize, (req, res) => {
+  const username = tokenStorage[req.cookies.token]; // Get username from tokenStorage
+
+  pool.query('SELECT username, email FROM users WHERE username = $1', [username])
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(404).json({ error: "User not found" });
+          }
+          res.json(result.rows[0]); // Send username and email
+      })
+      .catch(err => {
+          console.error(err);
+          res.status(500).json({ error: "Database error" });
+      });
+});
+
+app.post('/profile/update-password', authorize, async (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+  const { newPassword } = req.body;
+
+  try {
+      const hashedPassword = await argon2.hash(newPassword);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hashedPassword, username]);
+      res.json({ message: "Password updated successfully!" });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to update password" });
+  }
+});
+
+//TODO choose where to put the middleware 'authorize'
 // Endpoint to handle form submission and insert listing into database
 app.post("/add-listing", (req, res) => {
   let { name, description, price, tags, photo } = req.body;
@@ -156,6 +212,49 @@ async function validateSignUp(body) {
   return true;
 }
 
+// Endpoint to handle form submission and insert listing into database
+app.post("/add-listing", authorize, (req, res) => {
+  let { name, description, price, tags, photo } = req.body;
+
+  // Insert data into the Listings table
+  pool.query(
+    `INSERT INTO Listings (title, description, price, listing_date, status) 
+    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
+    [name, description, price]
+  )
+  .then(result => {
+    let listingId = result.rows[0].listing_id;
+
+    // Insert tags if needed (chaining promises)
+    let tagPromises = tags.map(tag => {
+      return pool.query(
+        `INSERT INTO Tags (tag_name) 
+        VALUES ($1) 
+        ON CONFLICT (tag_name) DO NOTHING`,
+        [tag]
+      ).then(() => {
+        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
+      }).then(tagResult => {
+        let tagId = tagResult.rows[0].tag_id;
+        return pool.query(
+          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
+          [listingId, tagId]
+        );
+      });
+    });
+
+    // Execute all tag insertion promises
+    return Promise.all(tagPromises);
+  })
+  .then(() => {
+    res.status(200).json({ message: "Listing added successfully" });
+  })
+  .catch(error => {
+    console.error("Error inserting listing:", error);
+    res.status(500).json({ message: "Failed to add listing" });
+  });
+});
+
 // Endpoint to handle bid form submission and insert bid listing into database
 app.post("/add-bid-listing", (req, res) => {
   let { name, description, minimumBid, minimumIncrease, auctionEndDate, photo } = req.body;
@@ -244,6 +343,10 @@ app.post("/create", async (req, res) => {
   return res.status(200).send(); 
 });
 
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'login.html')); // Adjust the path as needed
+});
+
 // End point to log in a user
 app.post("/login", async (req, res) => {
   let { body } = req;
@@ -288,15 +391,6 @@ app.post("/login", async (req, res) => {
   return res.cookie("token", token, cookieOptions).send(); // TODO
 });
 
-/* middleware; check if login token in token storage, if not, 403 response */
-let authorize = (req, res, next) => {
-  let { token } = req.cookies;
-  console.log(token, tokenStorage);
-  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-    return res.sendStatus(403); // TODO
-  }
-  next();
-};
 
 // End point to log out a user
 app.post("/logout", (req, res) => {
