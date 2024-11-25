@@ -179,8 +179,8 @@ app.get("/api/user/listings", (req, res) => {
         const userId = result.rows[0].user_id;
         console.log("User ID:", userId);
   return pool.query(
-      `SELECT * FROM Listings WHERE user_id = $1 ORDER BY listing_date DESC`,
-      [userId]
+    `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = FALSE ORDER BY listing_date DESC`,
+          [userId]
   );
     })
   .then(result => {
@@ -189,6 +189,29 @@ app.get("/api/user/listings", (req, res) => {
   .catch(error => {
       console.error("Error fetching user listings:", error);
       res.status(500).json({ message: "Failed to fetch user listings" });
+  });
+});
+
+app.get("/api/user/biddings", (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+    .then(result => {
+        if (result.rows.length === 0) {
+          return res.status(403).json({ message: "Unauthorized" });
+        } 
+        const userId = result.rows[0].user_id;
+        console.log("User ID:", userId);
+  return pool.query(
+      `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = TRUE ORDER BY listing_date DESC`,
+      [userId]
+  );
+    })
+  .then(result => {
+      res.json(result.rows); 
+  })
+  .catch(error => {
+      console.error("Error fetching user biddings:", error);
+      res.status(500).json({ message: "Failed to fetch user biddings" });
   });
 });
 
@@ -248,12 +271,21 @@ async function validateSignUp(body) {
 // Endpoint to handle bid form submission and insert bid listing into database
 app.post("/add-bid-listing", (req, res) => {
   let { name, description, minimumBid, minimumIncrease, auctionEndDate, photo } = req.body;
-
-  pool.query(
-      `INSERT INTO Listings (title, description, minimum_bid, current_max_bid, minimum_increase, listing_date, auction_end_date, status, is_auction) 
-      VALUES ($1, $2, $3, $4, $5, NOW(), $6, 'open', TRUE) RETURNING listing_id`,
-      [name, description, minimumBid, minimumBid, minimumIncrease, auctionEndDate]
-  )
+  const username = tokenStorage[req.cookies.token];
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+    .then(result => {
+        if (result.rows.length === 0) {
+          return res.status(403).json({ message: "Unauthorized" });
+        } 
+        const userId = result.rows[0].user_id;
+        console.log("User ID:", userId);
+        // Insert data into the Listings table
+      return pool.query(
+        `INSERT INTO Listings (user_id, title, description, minimum_bid, listing_date, auction_end_date, status, is_auction) 
+        VALUES ($1, $2, $3, $4, NOW(), $5, 'open', TRUE) RETURNING listing_id`,
+        [userId, name, description, minimumBid, auctionEndDate]
+      );
+    })
   .then(result => {
       let listingId = result.rows[0].listing_id;
       if (photo) {

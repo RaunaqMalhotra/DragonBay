@@ -61,4 +61,28 @@ async function fetchUserListings() {
         document.getElementById("userlistings").innerHTML = "<p>Error loading user listings.</p>";
     }
 }
+async function fetchUserBiddings() {
+    try {
+        const response = await fetch('api/user/biddings');
+        const biddings = await response.json();
+        const userBiddingsDiv = document.getElementById("userBiddings");
+        if (biddings.length > 0) {
+            userBiddingsDiv.innerHTML = biddings.map(bidding =>`
+                <div class = "bidding">
+                    <h3> ${bidding.title}</h3>
+                    <p><strong>Description:</strong> ${bidding.description}</p>
+                    <p><strong>Minimum bid:</strong> ${bidding.minimum_bid}
+                    <p><strong>Date Listed:</strong> ${new Date(bidding.listing_date).toLocaleDateString()}</p>
+                    <p><strong>Status:</strong> ${bidding.status}</p>
+                    <p><strong>Auction Ends:</strong> ${new Date(bidding.auction_end_date).toLocaleDateString()}</p>
+                </div>`).join("");
+        } else {
+            userBiddingsDiv.innerHTML = "<p>No biddings found.</p>";
+        }
+    } catch{
+        console.error("Error fetching user biddings:", error);
+        document.getElementById("userBiddings").innerHTML = "<p>Error loading user biddings.</p>";
+    }
+}
 fetchUserListings();
+fetchUserBiddings()
