@@ -13,7 +13,8 @@ CREATE TABLE Users (
     username VARCHAR(50),
     email TEXT UNIQUE NOT NULL,
     password_hash VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    profile_picture_path TEXT,
 );
 
 -- Create Listings table with auction items
