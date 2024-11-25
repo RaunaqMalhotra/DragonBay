@@ -37,3 +37,28 @@ async function updatePassword(event) {
 }
 
 window.onload = fetchProfile;
+
+async function fetchUserListings() {
+    try {
+        const response = await fetch('/api/user/listings'); 
+        const listings = await response.json();
+        const userListingsDiv = document.getElementById("userlistings");
+        if (listings.length > 0) {
+            userListingsDiv.innerHTML = listings.map(listing => `
+                <div class="listing">
+                    <h3>${listing.title}</h3>
+                    <p><strong>Description:</strong> ${listing.description}</p>
+                    <p><strong>Price:</strong> $${listing.price}</p>
+                    <p><strong>Date Listed:</strong> ${new Date(listing.listing_date).toLocaleDateString()}</p>
+                    <p><strong>Status:</strong> ${listing.status}</p>
+                </div>
+            `).join("");
+        } else {
+            userListingsDiv.innerHTML = "<p>No listings found.</p>";
+        }
+    } catch (error) {
+        console.error("Error fetching user listings:", error);
+        document.getElementById("userlistings").innerHTML = "<p>Error loading user listings.</p>";
+    }
+}
+fetchUserListings();

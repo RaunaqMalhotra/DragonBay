@@ -120,13 +120,22 @@ app.post('/profile/update-password', authorize, async (req, res) => {
 // Endpoint to handle form submission and insert listing into database
 app.post("/add-listing", (req, res) => {
   let { name, description, price, tags, photo } = req.body;
-
+  const username = tokenStorage[req.cookies.token];
   // Insert data into the Listings table
-  pool.query(
-    `INSERT INTO Listings (title, description, price, listing_date, status) 
-    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
-    [name, description, price]
-  )
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+    .then(result => {
+        if (result.rows.length === 0) {
+          return res.status(403).json({ message: "Unauthorized" });
+        } 
+        const userId = result.rows[0].user_id;
+        console.log("User ID:", userId);
+        // Insert data into the Listings table
+      return pool.query(
+        `INSERT INTO Listings (user_id, title, description, price, listing_date, status) 
+        VALUES ($1, $2, $3, $4, NOW(), 'available') RETURNING listing_id`,
+        [userId, name, description, price]
+      );
+    })
   .then(result => {
     let listingId = result.rows[0].listing_id;
 
@@ -159,6 +168,30 @@ app.post("/add-listing", (req, res) => {
     res.status(500).json({ message: "Failed to add listing" });
   });
 });
+
+app.get("/api/user/listings", (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+    .then(result => {
+        if (result.rows.length === 0) {
+          return res.status(403).json({ message: "Unauthorized" });
+        } 
+        const userId = result.rows[0].user_id;
+        console.log("User ID:", userId);
+  return pool.query(
+      `SELECT * FROM Listings WHERE user_id = $1 ORDER BY listing_date DESC`,
+      [userId]
+  );
+    })
+  .then(result => {
+      res.json(result.rows); 
+  })
+  .catch(error => {
+      console.error("Error fetching user listings:", error);
+      res.status(500).json({ message: "Failed to fetch user listings" });
+  });
+});
+
 
 /* returns a random 32 byte string */
 function makeToken() {
