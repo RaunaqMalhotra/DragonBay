@@ -17,6 +17,7 @@ const hostname = "localhost";
 const env = require("../config/env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
+const multer = require("multer");
 
 // Store connected users
 let connectedClients = [];
@@ -76,6 +77,10 @@ app.get('/listing.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'listing.html'));
 });
 
+app.get('/bidding.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bidding.html'));
+});
+
 app.get('/profile.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
@@ -85,6 +90,48 @@ app.get('/product.html', authorize, (req, res) => {
 });
 
 app.use(express.static("public"));
+
+// Set storage engine
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+      cb(null, "public/uploads/profile_pictures/");
+  },
+  filename: function (req, file, cb) {
+      const uniqueName = `user-${Date.now()}-${file.originalname}`;
+      cb(null, uniqueName);
+  }
+});
+const upload = multer({ storage });
+// Endpoint to handle profile picture upload
+app.post("/upload-profile-picture", upload.single("profilePicture"), (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+  const filePath = `uploads/profile_pictures/${req.file.filename}`;
+  pool.query(
+      "UPDATE Users SET profile_picture_path = $1 WHERE username = $2",
+      [filePath, username]
+  )
+  .then(() => {
+      res.status(200).json({ message: "Profile picture uploaded successfully!", filePath });
+  })
+  .catch(error => {
+      console.error("Error updating profile picture path:", error);
+      res.status(500).json({ message: "Failed to update profile picture path" });
+  });
+});
+app.get("/api/user/profile-picture", (req, res) => {
+const username = tokenStorage[req.cookies.token];
+pool.query("SELECT profile_picture_path FROM Users WHERE username = $1", [username])
+    .then(result => {
+        if (result.rows.length === 0 || !result.rows[0].profile_picture_path) {
+            return res.status(404).json({ message: "Profile picture not found" });
+        }
+        res.json({ profilePicturePath: result.rows[0].profile_picture_path });
+    })
+    .catch(error => {
+        console.error("Error fetching profile picture path:", error);
+        res.status(500).json({ message: "Failed to fetch profile picture" });
+    });
+});
 
 app.get('/profile', authorize, (req, res) => {
   const username = tokenStorage[req.cookies.token]; // Get username from tokenStorage

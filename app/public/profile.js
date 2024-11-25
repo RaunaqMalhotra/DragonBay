@@ -84,5 +84,47 @@ async function fetchUserBiddings() {
         document.getElementById("userBiddings").innerHTML = "<p>Error loading user biddings.</p>";
     }
 }
+
+document.getElementById("profilePictureForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData();
+    const fileInput = document.getElementById("profilePicture");
+    formData.append("profilePicture", fileInput.files[0]);
+    try {
+        const response = await fetch("/upload-profile-picture", {
+            method: "POST",
+            body: formData,
+        });
+        const result = await response.json();
+        if (response.ok) {
+            document.getElementById("uploadMessage").textContent = "Profile picture uploaded successfully!";
+            console.log("File path:", result.filePath);
+        } else {
+            document.getElementById("uploadMessage").textContent = "Failed to upload profile picture.";
+        }
+    } catch (error) {
+        console.error("Error uploading profile picture:", error);
+        document.getElementById("uploadMessage").textContent = "Error uploading profile picture.";
+    }
+});
+async function fetchProfilePicture() {
+    try {
+        const response = await fetch("/api/user/profile-picture"); // API endpoint to get the profile picture path
+        const result = await response.json();
+        if (response.ok) {
+            const profilePicturePath = result.profilePicturePath;
+            const profilePictureImg = document.getElementById("profilePictureDisplay");
+            profilePictureImg.src = `/${profilePicturePath}`; // Set the src to the relative path
+        } else {
+            console.error(result.message);
+            document.getElementById("profilePictureDisplay").src = "/default-profile.png"; // Default profile picture
+        }
+    } catch (error) {
+        console.error("Error fetching profile picture:", error);
+        document.getElementById("profilePictureDisplay").src = "/default-profile.png"; // Default profile picture
+    }
+}
+
+fetchProfilePicture();
 fetchUserListings();
 fetchUserBiddings()
