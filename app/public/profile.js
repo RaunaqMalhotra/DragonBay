@@ -42,20 +42,22 @@ async function fetchUserListings() {
     try {
         const response = await fetch('/api/user/listings'); 
         const listings = await response.json();
-        const userListingsDiv = document.getElementById("userlistings");
+        const grid = document.getElementById("listingGrid");
+
         if (listings.length > 0) {
-            userListingsDiv.innerHTML = listings.map(listing => `
-                <div class="listing">
-                    <h3>${listing.title}</h3>
-                    <p><strong>Description:</strong> ${listing.description}</p>
-                    <p><strong>Price:</strong> $${listing.price}</p>
-                    <p><strong>Date Listed:</strong> ${new Date(listing.listing_date).toLocaleDateString()}</p>
-                    <p><strong>Status:</strong> ${listing.status}</p>
-                </div>
-            `).join("");
-        } else {
-            userListingsDiv.innerHTML = "<p>No listings found.</p>";
-        }
+            listings.forEach(listing => {
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.innerHTML = `
+                    <a href="/product.html?id=${listing.listing_id}">
+                        <h3>${listing.title}</h3>
+                        <p>${listing.description}</p>
+                        <p>Price: $${listing.price}</p>
+                    </a>
+                `;
+                grid.appendChild(card);
+            });
+        } 
     } catch (error) {
         console.error("Error fetching user listings:", error);
         document.getElementById("userlistings").innerHTML = "<p>Error loading user listings.</p>";
@@ -65,17 +67,21 @@ async function fetchUserBiddings() {
     try {
         const response = await fetch('api/user/biddings');
         const biddings = await response.json();
-        const userBiddingsDiv = document.getElementById("userBiddings");
+        const grid = document.getElementById("biddingGrid");
+
         if (biddings.length > 0) {
-            userBiddingsDiv.innerHTML = biddings.map(bidding =>`
-                <div class = "bidding">
-                    <h3> ${bidding.title}</h3>
-                    <p><strong>Description:</strong> ${bidding.description}</p>
-                    <p><strong>Minimum bid:</strong> ${bidding.minimum_bid}
-                    <p><strong>Date Listed:</strong> ${new Date(bidding.listing_date).toLocaleDateString()}</p>
-                    <p><strong>Status:</strong> ${bidding.status}</p>
-                    <p><strong>Auction Ends:</strong> ${new Date(bidding.auction_end_date).toLocaleDateString()}</p>
-                </div>`).join("");
+            biddings.forEach(bidding => {
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.innerHTML = `
+                    <a href="/product.html?id=${bidding.listing_id}">
+                        <h3>${bidding.title}</h3>
+                        <p>${bidding.description}</p>
+                        <p>Price: $${bidding.price}</p>
+                    </a>
+                `;
+                grid.appendChild(card);
+            });
         } else {
             userBiddingsDiv.innerHTML = "<p>No biddings found.</p>";
         }
