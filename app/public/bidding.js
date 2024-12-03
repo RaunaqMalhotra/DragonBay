@@ -1,30 +1,34 @@
-/* 
-CLIENT SIDE CODE FOR bidding.js
+/*
+CLIENT SIDE CODE FOR bidding.html
 */
 
-let submitButton = document.getElementById("bidSubmit");
-
-submitButton.addEventListener("click", function (event) {
+document.getElementById("biddingForm").addEventListener("submit", function(event) {
     event.preventDefault();
 
-    let formData = {
-        name: document.getElementById("itemName").value,
-        description: document.getElementById("itemDescription").value,
-        minimumBid: parseFloat(document.getElementById("minBidPrice").value),
-        minimumIncrease: parseFloat(document.getElementById("minBidIncrease").value),
-        auctionEndDate: document.getElementById("auctionEndDate").value,
-        photo: document.getElementById("itemPhoto").files[0] ? document.getElementById("itemPhoto").files[0].name : null
-    };
+    const formData = new FormData();
+    formData.append("name", document.getElementById("itemName").value);
+    formData.append("description", document.getElementById("itemDescription").value);
+    formData.append("minimumBid", parseFloat(document.getElementById("minBidPrice").value));
+    formData.append("minimumIncrease", parseFloat(document.getElementById("minBidIncrease").value));
+    formData.append("auctionEndDate", document.getElementById("auctionEndDate").value);
+
+    const photos = document.getElementById("itemPhotos").files;
+    for (let i = 0; i < photos.length; i++) {
+        formData.append("photos", photos[i]);
+    }
 
     fetch("/add-bid-listing", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: formData,
     })
     .then(response => response.json())
     .then(result => {
-        document.getElementById("message").textContent = result.message;
-        if (result.success) document.getElementById("biddingForm").reset();
+        if (result.success) {
+            document.getElementById("message").textContent = result.message;
+            document.getElementById("biddingForm").reset();
+        } else {
+            document.getElementById("message").textContent = `Error: ${result.message}`;
+        }
     })
     .catch(error => {
         console.error("Error submitting form:", error);

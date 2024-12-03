@@ -20,7 +20,6 @@ const pool = new Pool(env);
 const multer = require("multer");
 
 // Store connected users
-let connectedClients = [];
 let tokenStorage = {};
 
 pool.connect().then(function () {
@@ -102,6 +101,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+
 // Endpoint to handle profile picture upload
 app.post("/upload-profile-picture", upload.single("profilePicture"), (req, res) => {
   const username = tokenStorage[req.cookies.token];
@@ -163,57 +163,77 @@ app.post('/profile/update-password', authorize, async (req, res) => {
   }
 });
 
-//TODO choose where to put the middleware 'authorize'
+// Storage for listing photos
+const listingStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+      cb(null, "public/uploads/listing_photos/"); // Directory for listing photos
+  },
+  filename: function (req, file, cb) {
+      const uniqueName = `listing-${Date.now()}-${file.originalname}`; // Unique naming for listing photos
+      cb(null, uniqueName);
+  }
+});
+const listingUpload = multer({ storage: listingStorage });
+
 // Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", (req, res) => {
-  let { name, description, price, tags, photo } = req.body;
+app.post("/add-listing", listingUpload.array("photos", 10), (req, res) => {
+  const { name, description, price, tags } = req.body;
   const username = tokenStorage[req.cookies.token];
-  // Insert data into the Listings table
+  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
+
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
-    .then(result => {
-        if (result.rows.length === 0) {
-          return res.status(403).json({ message: "Unauthorized" });
-        } 
-        const userId = result.rows[0].user_id;
-        console.log("User ID:", userId);
-        // Insert data into the Listings table
-      return pool.query(
-        `INSERT INTO Listings (user_id, title, description, price, listing_date, status) 
-        VALUES ($1, $2, $3, $4, NOW(), 'available') RETURNING listing_id`,
-        [userId, name, description, price]
-      );
-    })
-  .then(result => {
-    let listingId = result.rows[0].listing_id;
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(403).json({ message: "Unauthorized" });
+          }
+          const userId = result.rows[0].user_id;
 
-    // Insert tags if needed (chaining promises)
-    let tagPromises = tags.map(tag => {
-      return pool.query(
-        `INSERT INTO Tags (tag_name) 
-        VALUES ($1) 
-        ON CONFLICT (tag_name) DO NOTHING`,
-        [tag]
-      ).then(() => {
-        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
-      }).then(tagResult => {
-        let tagId = tagResult.rows[0].tag_id;
-        return pool.query(
-          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
-          [listingId, tagId]
-        );
+          // Insert data into the Listings table
+          return pool.query(
+              `INSERT INTO Listings (user_id, title, description, price, listing_date, status) 
+              VALUES ($1, $2, $3, $4, NOW(), 'available') RETURNING listing_id`,
+              [userId, name, description, price]
+          );
+      })
+      .then(result => {
+          const listingId = result.rows[0].listing_id;
+
+          // Insert photos into the Photos table
+          const photoPromises = filePaths.map(path => {
+              return pool.query(
+                  `INSERT INTO Photos (listing_id, photo_url) VALUES ($1, $2)`,
+                  [listingId, path]
+              );
+          });
+
+          // Insert tags into the database
+          const parsedTags = JSON.parse(tags);
+          const tagPromises = parsedTags.map(tag => {
+              return pool.query(
+                  `INSERT INTO Tags (tag_name) 
+                  VALUES ($1) 
+                  ON CONFLICT (tag_name) DO NOTHING`,
+                  [tag]
+              ).then(() => {
+                  return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
+              }).then(tagResult => {
+                  const tagId = tagResult.rows[0].tag_id;
+                  return pool.query(
+                      `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
+                      [listingId, tagId]
+                  );
+              });
+          });
+
+          return Promise.all([...photoPromises, ...tagPromises]);
+      })
+      .then(() => {
+          res.status(200).json({ message: "Listing added successfully" });
+      })
+      .catch(error => {
+          console.error("Error inserting listing:", error);
+          res.status(500).json({ message: "Failed to add listing" });
       });
-    });
-
-    // Execute all tag insertion promises
-    return Promise.all(tagPromises);
-  })
-  .then(() => {
-    res.status(200).json({ message: "Listing added successfully" });
-  })
-  .catch(error => {
-    console.error("Error inserting listing:", error);
-    res.status(500).json({ message: "Failed to add listing" });
-  });
 });
 
 app.get("/api/user/listings", (req, res) => {
@@ -316,36 +336,45 @@ async function validateSignUp(body) {
 }
 
 // Endpoint to handle bid form submission and insert bid listing into database
-app.post("/add-bid-listing", (req, res) => {
-  let { name, description, minimumBid, minimumIncrease, auctionEndDate, photo } = req.body;
+app.post("/add-bid-listing", listingUpload.array("photos", 10), (req, res) => {
+  const { name, description, minimumBid, minimumIncrease, auctionEndDate } = req.body;
   const username = tokenStorage[req.cookies.token];
+  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
+
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
-    .then(result => {
-        if (result.rows.length === 0) {
-          return res.status(403).json({ message: "Unauthorized" });
-        } 
-        const userId = result.rows[0].user_id;
-        console.log("User ID:", userId);
-        // Insert data into the Listings table
-      return pool.query(
-        `INSERT INTO Listings (user_id, title, description, minimum_bid, listing_date, auction_end_date, status, is_auction) 
-        VALUES ($1, $2, $3, $4, NOW(), $5, 'open', TRUE) RETURNING listing_id`,
-        [userId, name, description, minimumBid, auctionEndDate]
-      );
-    })
-  .then(result => {
-      let listingId = result.rows[0].listing_id;
-      if (photo) {
-          return pool.query(`INSERT INTO Photos (listing_id, photo_url) VALUES ($1, $2)`, [listingId, photo]);
-      }
-  })
-  .then(() => {
-      res.status(200).json({ success: true, message: "Listing added successfully for bidding" });
-  })
-  .catch(error => {
-      console.error("Error adding bidding listing:", error);
-      res.status(500).json({ success: false, message: "Failed to add listing for bidding" });
-  });
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(403).json({ message: "Unauthorized" });
+          }
+          const userId = result.rows[0].user_id;
+
+          return pool.query(
+              `INSERT INTO Listings (user_id, title, description, minimum_bid, minimum_increase, auction_end_date, listing_date, status, is_auction) 
+              VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'open', TRUE) 
+              RETURNING listing_id`,
+              [userId, name, description, minimumBid, minimumIncrease, auctionEndDate]
+          );
+      })
+      .then(result => {
+          const listingId = result.rows[0].listing_id;
+
+          // Insert photos into the Photos table
+          const photoPromises = filePaths.map(path => {
+              return pool.query(
+                  `INSERT INTO Photos (listing_id, photo_url) VALUES ($1, $2)`,
+                  [listingId, path]
+              );
+          });
+
+          return Promise.all(photoPromises);
+      })
+      .then(() => {
+          res.status(200).json({ success: true, message: "Bid listing added successfully!" });
+      })
+      .catch(error => {
+          console.error("Error adding bid listing:", error);
+          res.status(500).json({ success: false, message: "Failed to add bid listing" });
+      });
 });
 
 // Endpoint to fetch all non-auction listings
@@ -359,20 +388,40 @@ app.get("/api/listings", async (req, res) => {
   }
 });
 
-
 // Endpoint to fetch a single listing by ID
 app.get("/api/listings/:id", async (req, res) => {
-  let listingId = req.params.id;
+  const listingId = req.params.id;
+
   try {
-    let result = await pool.query("SELECT * FROM Listings WHERE listing_id = $1", [listingId]);
-    if (result.rows.length > 0) {
-      res.json(result.rows[0]);
-    } else {
-      res.status(404).json({ error: "Listing not found" });
-    }
+      // Fetch listing details
+      const listingResult = await pool.query(
+          `SELECT listing_id, title, description, price, listing_date, status 
+          FROM Listings 
+          WHERE listing_id = $1`,
+          [listingId]
+      );
+
+      if (listingResult.rows.length === 0) {
+          return res.status(404).json({ error: "Listing not found" });
+      }
+
+      const listing = listingResult.rows[0];
+
+      // Fetch photos for the listing
+      const photosResult = await pool.query(
+          `SELECT photo_url 
+          FROM Photos 
+          WHERE listing_id = $1`,
+          [listingId]
+      );
+
+      const photos = photosResult.rows.map(photo => photo.photo_url);
+
+      // Combine listing details with photos
+      res.json({ ...listing, photos });
   } catch (err) {
-    console.error("Error fetching listing:", err);
-    res.status(500).json({ error: "Database error" });
+      console.error("Error fetching listing details:", err);
+      res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -510,7 +559,8 @@ app.get("/auctions", (req, res) => {
 
 // Endpoint to fetch details of a specific auction
 app.get("/auction/:id", (req, res) => {
-  let listingId = req.params.id;
+  const listingId = req.params.id;
+  const username = tokenStorage[req.cookies.token]; // Get username from token storage
 
   pool.query(
       `SELECT * FROM Listings WHERE listing_id = $1 AND is_auction = true`,
@@ -518,19 +568,27 @@ app.get("/auction/:id", (req, res) => {
   )
       .then(auctionResult => {
           if (auctionResult.rows.length === 0) {
-              // No auction found
               return res.status(404).json({ error: "Auction not found" });
           }
 
-          let auction = auctionResult.rows[0]; // Get auction details
+          const auction = auctionResult.rows[0];
 
           // Fetch associated bids
           return pool.query(
               `SELECT user_id, bid_amount, bid_time FROM Bids WHERE listing_id = $1 ORDER BY bid_time DESC`,
               [listingId]
           ).then(bidsResult => {
-              auction.bids = bidsResult.rows; // Add bids to auction
-              res.json(auction); // Send response
+              auction.bids = bidsResult.rows;
+
+              // Fetch photos for the auction
+              return pool.query(
+                  `SELECT photo_url FROM Photos WHERE listing_id = $1`,
+                  [listingId]
+              ).then(photosResult => {
+                  auction.photos = photosResult.rows.map(photo => photo.photo_url); // Add photos to auction
+                  auction.username = username; // Add username for frontend display
+                  res.json(auction); // Send response
+              });
           });
       })
       .catch(err => {
@@ -541,52 +599,68 @@ app.get("/auction/:id", (req, res) => {
 
 // End point to place a bid
 app.post("/place-bid", (req, res) => {
-  const { listingId, userId, bidAmount } = req.body;
+  const { listingId, bidAmount } = req.body;
+  const username = tokenStorage[req.cookies.token];
+  console.log(username);
 
-  pool.query(
-    `SELECT minimum_bid, current_max_bid, minimum_increase FROM Listings WHERE listing_id = $1`,
-    [listingId]
-  )
-    .then((listingResult) => {
-      if (listingResult.rows.length === 0) {
-        throw new Error("Listing not found");
+  // Step 1: Authenticate the user
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
       }
 
-      const { minimum_bid: minimumBid, current_max_bid: currentMaxBid, minimum_increase: minimumIncrease } = listingResult.rows[0];
+      const userId = result.rows[0].user_id;
 
-      // Validate against the minimum and maximum bids
-      if (bidAmount < minimumBid) {
-        throw new Error(`Bid amount must be at least $${minimumBid}`);
-      }
-      if (bidAmount <= currentMaxBid) {
-        throw new Error(`Bid must be higher than the current maximum bid of $${currentMaxBid}`);
-      }
-      let difference = bidAmount - currentMaxBid;
-      console.log(bidAmount);
-      console.log(currentMaxBid);
-      console.log(minimumIncrease);
-      console.log(difference);
-      if (difference < minimumIncrease) {
-        throw new Error(`Bid must be at least $${minimumIncrease} greater than $${currentMaxBid}`);
-      }
-
-      // Step 2: Insert the new bid into the database
+      // Step 2: Validate and insert the bid
       return pool.query(
-        `INSERT INTO Bids (listing_id, user_id, bid_amount, bid_time) VALUES ($1, $2, $3, NOW()) RETURNING *`,
-        [listingId, userId, bidAmount]
-      );
+        `SELECT minimum_bid, current_max_bid, minimum_increase FROM Listings WHERE listing_id = $1`,
+        [listingId]
+      ).then((listingResult) => {
+        if (listingResult.rows.length === 0) {
+          throw new Error("Listing not found");
+        }
+
+        const { 
+          minimum_bid: minimumBid, 
+          current_max_bid: currentMaxBid, 
+          minimum_increase: minimumIncrease 
+        } = listingResult.rows[0];
+
+        // Validate against the minimum and maximum bids
+        if (bidAmount < minimumBid) {
+          throw new Error(`Bid amount must be at least $${minimumBid}`);
+        }
+        if (bidAmount <= currentMaxBid) {
+          throw new Error(`Bid must be higher than the current maximum bid of $${currentMaxBid}`);
+        }
+        let difference = bidAmount - currentMaxBid;
+        console.log(bidAmount);
+        console.log(currentMaxBid);
+        console.log(minimumIncrease);
+        console.log(difference);
+        if (difference < minimumIncrease) {
+          throw new Error(`Bid must be at least $${minimumIncrease} greater than $${currentMaxBid}`);
+        }
+
+        // Step 3: Insert the new bid into the database
+        return pool.query(
+          `INSERT INTO Bids (listing_id, user_id, bid_amount, bid_time) VALUES ($1, $2, $3, NOW()) RETURNING *`,
+          [listingId, userId, bidAmount]
+        );
+      });
     })
     .then((insertResult) => {
       const newBid = insertResult.rows[0];
 
-      // Step 3: Update the max_bid in the Listings table
+      // Step 4: Update the max_bid in the Listings table
       return pool.query(
         `UPDATE Listings SET current_max_bid = $1 WHERE listing_id = $2`,
-        [bidAmount, listingId]
+        [bidAmount, newBid.listing_id]
       ).then(() => newBid); // Pass the newBid along
     })
     .then((newBid) => {
-      // Notify all connected clients of the new bid
+      // Step 5: Notify all connected clients of the new bid
       ioServer.emit("bid-update", newBid);
 
       // Respond with success

@@ -5,9 +5,6 @@ CLIENT side code for bid_detail.html
 const urlParams = new URLSearchParams(window.location.search);
 const auctionId = urlParams.get('id');
 
-// Dynamic User ID
-const userId = localStorage.getItem('userId') || 1234;
-
 // Connect to Socket.IO
 const socket = io("ws://localhost:3000");
 
@@ -34,12 +31,22 @@ function fetchAuctionDetails() {
         .then(auction => {
             let auctionDetails = document.getElementById('auctionDetails');
             let bidList = document.getElementById('bidList');
+            let auctionImages = document.getElementById('auctionImages');
 
             if (auction.error) {
                 auctionDetails.innerHTML = `<p>${auction.error}</p>`;
                 document.getElementById('bidForm').style.display = 'none';
                 return;
             }
+
+            // Hide bid form if auction has ended
+            if (new Date() > new Date(auction.auction_end_date)) {
+                document.getElementById('bidForm').style.display = 'none';
+                showMessage('error', 'This auction has ended.');
+            }
+
+            const username = auction.username;
+            console.log(username);
 
             // Display auction details
             auctionDetails.innerHTML = `
@@ -49,17 +56,24 @@ function fetchAuctionDetails() {
                 <p>Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
             `;
 
-            // Hide bid form if auction has ended
-            if (new Date() > new Date(auction.auction_end_date)) {
-                document.getElementById('bidForm').style.display = 'none';
-                showMessage('error', 'This auction has ended.');
+            // Display auction images
+            if (auction.photos && auction.photos.length > 0) {
+                auction.photos.forEach(photoUrl => {
+                    const img = document.createElement("img");
+                    img.src = `/${photoUrl}`;
+                    img.alt = `${auction.title}`;
+                    img.className = "auction-image"; // Add a class for styling
+                    auctionImages.appendChild(img);
+                });
+            } else {
+                auctionImages.innerHTML = "<p>No images available for this auction.</p>";
             }
 
             // Display current bids
             if (auction.bids && auction.bids.length > 0) {
                 auction.bids.forEach(bid => {
                     let listItem = document.createElement('li');
-                    listItem.textContent = `User ${bid.user_id}: $${bid.bid_amount}`;
+                    listItem.textContent = `${username}: $${bid.bid_amount}`;
                     bidList.appendChild(listItem);
                 });
             } else {
@@ -97,7 +111,7 @@ document.getElementById('bidForm').addEventListener('submit', (event) => {
     fetch('/place-bid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: auctionId, userId, bidAmount })
+        body: JSON.stringify({ listingId: auctionId, bidAmount })
     })
     .then(response => response.json())
     .then(result => {
@@ -122,9 +136,9 @@ document.getElementById('bidForm').addEventListener('submit', (event) => {
 });
 
 function showMessage(type, text) {
-    const messageEl = document.getElementById('message');
-    messageEl.textContent = text;
-    messageEl.className = type === 'success' ? 'success' : 'error';
+    const message = document.getElementById('message');
+    message.textContent = text;
+    message.className = type === 'success' ? 'success' : 'error';
 }
 
 fetchAuctionDetails();

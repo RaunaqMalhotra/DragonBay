@@ -5,41 +5,36 @@ CLIENT-SIDE CODE FOR listing.html
 document.getElementById("listingForm").addEventListener("submit", function(event) {
     event.preventDefault();
 
-    // Capture form data
-    let itemName = document.getElementById("itemName").value;
-    let itemDescription = document.getElementById("itemDescription").value;
-    let itemPrice = parseFloat(document.getElementById("itemPrice").value);
-    let itemTags = document.getElementById("itemTags").value.split(" ");
-    let itemPhoto = document.getElementById("itemPhoto").files[0] ? document.getElementById("itemPhoto").files[0].name : null;
+    const formData = new FormData();
+    formData.append("name", document.getElementById("itemName").value);
+    formData.append("description", document.getElementById("itemDescription").value);
+    formData.append("price", parseFloat(document.getElementById("itemPrice").value));
+    const tags = document.getElementById("itemTags").value.split(" ");
+    formData.append("tags", JSON.stringify(tags));
 
-    // Create form data object to send to server
-    let formData = {
-        name: itemName,
-        description: itemDescription,
-        price: itemPrice,
-        tags: itemTags,
-        photo: itemPhoto
-    };
+    const photos = document.getElementById("itemPhotos").files;
+    for (let i = 0; i < photos.length; i++) {
+        formData.append("photos", photos[i]);
+    }
 
-    // Send data to server with fetch
     fetch("/add-listing", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
+        body: formData,
     })
-    .then(response => response.json())
-    .then(result => {
-        if (result.message === "Listing added successfully") {
-            document.getElementById("message").textContent = "Listing added successfully!";
-            document.getElementById("listingForm").reset();
-        } else {
-            document.getElementById("message").textContent = `Error: ${result.message}`;
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(result => {
+                throw new Error(result.message || "Failed to submit listing.");
+            });
         }
+        return response.json();
+    })
+    .then(result => {
+        document.getElementById("message").textContent = result.message;
+        document.getElementById("listingForm").reset();
     })
     .catch(error => {
         console.error("Error submitting form:", error);
-        document.getElementById("message").textContent = "Failed to submit listing.";
+        document.getElementById("message").textContent = error.message || "Failed to submit listing.";
     });
 });
