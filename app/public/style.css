@@ -180,6 +180,21 @@ form label {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.auction-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.auction-images img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Navbar */
 #navbar-placeholder {
     width: 100%;
