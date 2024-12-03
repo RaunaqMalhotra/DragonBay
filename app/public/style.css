@@ -208,3 +208,12 @@ nav ul li a{
     width: 20px;
     margin-top: 15px;
 }
+
+.search-bar {
+    margin: 10px auto;
+    padding: 10px;
+    width: 80%;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
