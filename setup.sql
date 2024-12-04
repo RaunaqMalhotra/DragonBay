@@ -63,11 +63,12 @@ CREATE TABLE Bids (
 -- Create Messages table to store messages between users
 CREATE TABLE Messages (
     message_id SERIAL PRIMARY KEY,
-    room VARCHAR(100) UNIQUE NOT NULL,
-    sender INT NOT NULL,
-    receiver INT NOT NULL,
+    room VARCHAR(100) NOT NULL,
+    sender VARCHAR(50) NOT NULL,
+    receiver VARCHAR(50) NOT NULL,
     message_text TEXT NOT NULL,
     message_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES Users(user_id),
-    FOREIGN KEY (receiver_id) REFERENCES Users(user_id)
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender) REFERENCES Users(username),
+    FOREIGN KEY (receiver) REFERENCES Users(username)
 );

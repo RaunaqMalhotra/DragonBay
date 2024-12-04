@@ -6,7 +6,6 @@ const argon2 = require("argon2");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const { Server } = require('socket.io');
-const path = require('path');
 const cors = require('cors');
 
 const port = process.env.PORT || 3000;
@@ -33,6 +32,7 @@ app.use(cors());
 
 app.use((req, res, next) => {
   const token = req.cookies.token;
+
   if (token && tokenStorage[token]) {
       req.username = tokenStorage[token];
   }
@@ -47,7 +47,11 @@ const UsersState = {
   }
 };
 
-const ioServer = new Server(expressServer, {
+const server = app.listen(port, () => {
+  console.log(`Listening at: http://localhost:${port}`);
+});
+
+const ioServer = new Server(server, {
   cors: {
       origin: '*'
   }
@@ -60,46 +64,47 @@ app.get("/", (req, res) => {
 });
 
 // Endpoint to handle form submission and insert listing into database
-app.post("/add-listing", (req, res) => {
+app.post("/add-listing", async (req, res) => {
   const { name, description, price, tags, photo } = req.body;
+  const username = req.username;
+  console.log("Username:", username);
+  try {
+    //get user_id using username from users table
+    const userResult = await pool.query(`SELECT user_id FROM Users WHERE username = $1`, [username]);
+    const user_id = userResult.rows[0].user_id;
 
-  // Insert data into the Listings table
-  pool.query(
-    `INSERT INTO Listings (title, description, price, listing_date, status) 
-    VALUES ($1, $2, $3, NOW(), 'available') RETURNING listing_id`,
-    [name, description, price]
-  )
-  .then(result => {
-    let listingId = result.rows[0].listing_id;
+    // Insert data into the Listings table
+    const listingResult = await pool.query(
+      `INSERT INTO Listings (user_id, title, description, price, listing_date, status) 
+      VALUES ($1, $2, $3, $4, NOW(), 'available') RETURNING listing_id`,
+      [user_id, name, description, price]
+    );
+    let listingId = listingResult.rows[0].listing_id;
 
-    // Insert tags if needed (chaining promises)
-    let tagPromises = tags.map(tag => {
-      return pool.query(
+    // Insert tags if needed
+    let tagPromises = tags.map(async (tag) => {
+      await pool.query(
         `INSERT INTO Tags (tag_name) 
         VALUES ($1) 
         ON CONFLICT (tag_name) DO NOTHING`,
         [tag]
-      ).then(() => {
-        return pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
-      }).then(tagResult => {
-        const tagId = tagResult.rows[0].tag_id;
-        return pool.query(
-          `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
-          [listingId, tagId]
-        );
-      });
+      );
+      const tagResult = await pool.query(`SELECT tag_id FROM Tags WHERE tag_name = $1`, [tag]);
+      const tagId = tagResult.rows[0].tag_id;
+      return pool.query(
+        `INSERT INTO ListingTags (listing_id, tag_id) VALUES ($1, $2)`,
+        [listingId, tagId]
+      );
     });
 
     // Execute all tag insertion promises
-    return Promise.all(tagPromises);
-  })
-  .then(() => {
+    await Promise.all(tagPromises);
+
     res.status(200).json({ message: "Listing added successfully" });
-  })
-  .catch(error => {
+  } catch (error) {
     console.error("Error inserting listing:", error);
     res.status(500).json({ message: "Failed to add listing" });
-  });
+  }
 });
 
 /* returns a random 32 byte string */
@@ -246,6 +251,7 @@ app.get("/api/listings/:id", async (req, res) => {
       WHERE listing_id = $1`,
       [listingId]);
     if (result.rows.length > 0) {
+      console.log(result.rows[0], account_username);
       res.json({...result.rows[0], account_username});
     } else {
       res.status(404).json({ error: "Listing not found" });
@@ -338,7 +344,7 @@ app.post("/login", async (req, res) => {
 
 /* middleware; check if login token in token storage, if not, 403 response */
 let authorize = (req, res, next) => {
-  let { token } = req.cookies;
+  let token = req.cookies.token; 
   console.log(token, tokenStorage);
   if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
     return res.sendStatus(403); // TODO
@@ -377,25 +383,68 @@ app.get("/private", authorize, (req, res) => {
   return res.send("A private message\n");
 });
 
-app.get("/messages/:username", async (req, res) => {
-  const username = req.params.username;
+// Endpoint to fetch recent messages for a specific user
+app.get("/messages/recent", async (req, res) => {
+  const username = req.username;
+  console.log(`Fetching previous messages for user: ${username}`);
   try {
-    const receivers = await pool.query(`SELECT DISTINCT receiver FROM Messages WHERE sender = $1`, [username]);
-    if (receivers.rows.length > 0) {
-      const recentMessages = await pool.query(
-        `SELECT * 
-        FROM Messages 
-        WHERE sender = $1 
-        AND receiver = $2 
-        ORDER BY message_timestamp DESC LIMIT 1`,
-        [username, receivers.rows]);
-      return res.json(recentMessages.rows);
+    const activeRooms = await getRoomsWithUser(username);
+    console.log(activeRooms.rows);
+    if (activeRooms.rows.length > 0) {
+      const allMessages = [];
+      for (const activeRoom of activeRooms.rows) {
+        const recentMessages = await pool.query(
+          `SELECT * 
+          FROM Messages 
+          WHERE room = $1 
+          ORDER BY message_timestamp DESC
+          LIMIT 1`,
+          [activeRoom.room]);
+        console.log(recentMessages.rows);
+        allMessages.push(...recentMessages.rows);
+      }
+      return res.json(allMessages);
     } else {
-      res.send("No messages found");
+      console.log('No messages found');
+      res.json({ message: "No messages found" });
     }
   } catch (error) {
     console.error("Error fetching messages for preview:", error);
     res.status(500).json({message: "Failed to fetch messages"});
+  }
+});
+
+app.get('/messages/chat_history/:room', async (req, res) => {
+  console.log('Fetching chat history');
+  const username = req.username;
+  const room = req.params.room;
+  try {
+      const result = await pool.query(
+          `SELECT * FROM Messages WHERE room = $1 ORDER BY message_timestamp ASC`,
+          [room]
+      );
+
+      // Mark messages as read
+      await pool.query(
+          `UPDATE Messages SET is_read = TRUE WHERE receiver = $1 AND is_read = FALSE`,
+          [username]
+      );
+
+      return res.json(result.rows);
+  } catch (error) {
+      console.error("Error fetching previous messages:", error);
+      return res.status(500).json({ message: "Failed to fetch previous messages" });
+  }
+});
+
+
+app.get('/api/username', authorize, (req, res) => {
+  if (req.username) {
+    console.log(`User ${req.username} is authenticated`);
+    return res.json({ username: req.username });
+  } else {
+    console.log('User is not authenticated');
+    res.status(401).json({ error: 'Not authenticated' });
   }
 });
 
@@ -425,21 +474,10 @@ ioServer.on('connection', (socket) => {
       //join room
       socket.join(user.room);
       console.log(`User ${socket.id} joined room ${user.room}`);
-
-      //send to user that joins
-      socket.emit('message', buildMsg(ADMIN, `You have joined the ${user.room} chat room`));
       
-      //to everyone else
-      socket.broadcast.to(user.room).emit('message', buildMsg(ADMIN, `${user.name} has joined the room`));
-
       //update user list for new room
       ioServer.to(user.room).emit('userList', {
           users: getUsersInRoom(user.room)
-      });
-
-      //update active rooms list for everyone
-      ioServer.emit('roomlist', {
-          rooms: getAllActiveRooms()
       });
   });
 
@@ -449,45 +487,44 @@ ioServer.on('connection', (socket) => {
       userExitsChat(socket.id);
   
       if (user) {
-          ioServer.to(user.room).emit('message', buildMsg(ADMIN, `${user.name} has left the room`));
-
           ioServer.to(user.room).emit('userList', {
               users: getUsersInRoom(user.room)
-          });
-
-          ioServer.emit('roomList', {
-              rooms: getAllActiveRooms()
           });
       }
   });
 
   //Websockets endpoint for when user sends a message
-  socket.on('message', ({ name, text }) => {
-      if (name !== ADMIN) {
+  socket.on('message', async ({ name, text }) => {
+    console.log(`Message received from ${name}: ${text}`);
+    if (name !== ADMIN) {
         const room = getUser(socket.id)?.room;
         if (room) {
           const msg = buildMsg(name, text);
           const room_members = getUsersInRoom(room);
-          const sender = room_members.find(user => user.name === name);
-          const receiver = room_members.find(user => user.name !== name);
-          pool.query(
-              `INSERT INTO Messages (room, sender, receiver, message_text, message_timestamp) 
-              VALUES ($1, $2, $3, $4, $5);`, 
-              [room, sender, receiver, msg.text, msg.time]
-          ).then(() => {
-            ioServer.to(room).emit('message', msg);
-          }).catch(error => {
-            console.error("Error inserting message:", error);
-            res.status(500).json({ message: "Failed to save message" });
-          });
-        }
-      } else {
+          const sender = name;
+          const receiver = room.split('_').find(part => part !== sender);
+          // Check if the receiver is online
+          const isReceiverOnline = room_members.some(user => user.name === receiver);
+
+          try {
+              await pool.query(
+                  `INSERT INTO Messages (room, sender, receiver, message_text, message_timestamp, is_read) 
+                   VALUES ($1, $2, $3, $4, $5, $6);`,
+                  [room, sender, receiver, msg.text, msg.time, isReceiverOnline]
+              );              
+              ioServer.to(room).emit('message', msg);
+              console.log('Message broadcasted:', msg);
+          } catch (error) {
+              console.error("Error inserting message:", error);
+          }
+      }
+    } else {
         const room = getUser(socket.id)?.room;
         if (room) {
-          const msg = buildMsg(name, text);
-          ioServer.to(room).emit('message', msg);
+            const msg = buildMsg(name, text);
+            ioServer.to(room).emit('message', msg);
         }
-      }
+    }
   });
 
   //Websockets endpoint for detecting user typing activity
@@ -499,16 +536,19 @@ ioServer.on('connection', (socket) => {
   });
 });
 
+function getRoomsWithUser(username) {
+  return pool.query(
+    `SELECT DISTINCT room FROM Messages WHERE sender = $1 OR receiver = $1`,
+    [username]
+  );
+}
+
 //function to build message object for transmission
 function buildMsg(name, text) {
   return {
       name,
       text,
-      time: new Intl.DateTimeFormat('default', {
-          hour: 'numeric',
-          minute: 'numeric', 
-          second: 'numeric'
-      }).format(new Date())
+      time: new Date().toISOString()
   };
 }
 
@@ -541,12 +581,3 @@ function getUser(id) {
 function getUsersInRoom(room) {
   return UsersState.users.filter(user => user.room === room);
 }
-
-//get all active rooms
-function getAllActiveRooms() {
-  return Array.from(new Set(UsersState.users.map(user => user.room)));
-}
-
-app.listen(port, hostname, () => {
-  console.log(`Listening at: http://${hostname}:${port}`);
-});

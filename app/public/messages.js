@@ -1,39 +1,68 @@
 //TODO: Ensure message icon in html is href with username in query string
-const urlParams = new URLSearchParams(window.location.search);
-const username = urlParams.get('username');
+let username;
 
-async function fetchAllChats(params) {
-    try{
-        const message_container = document.querySelector('.message-container');
-        const response = await fetch(`messages/${username}`);
-        const messages = await response.json();
-
-        if (messages) {
-            for (let message of messages.rows) {
-                let receiver = message.receiver;
-                let time = message.message_timestamp;
-                let text = message.message_text;
-            
-                prevMessage = document.createElement('div');
-                prevMessage.className = 'message-preview';
-
-                prevMessage.innerHTML = `
-                <h3>${receiver}</h3>
-                <p>
-                    <class="message-preview-time">${time}</span>
-                    <class="message-preview-text">${text}</span>
-                </p>
-                `;
-
-                message_container.appendChild(prevMessage);
-            }
+async function fetchUsername() {
+    try {
+        const response = await fetch(`/api/username`);
+        const data = await response.json();
+        console.log('Username:', data);
+        if (response.ok) {
+            username = data.username;
+            fetchRecentMessages();
         } else {
-            message_container.innerHTML = `<p class="message-preview-none">No chats found.</p>`;
+            console.error('Failed to fetch username:', data.error);
         }
     } catch (error) {
-        console.error('Error fetching messages:', error);
-        document.querySelector('.message-container').innerHTML = `<p class="message-preview-none">Error loading messages.</p>`;
+        console.error('Error fetching username:', error);
     }
-
 }
 
+const message_container = document.querySelector('.message-container');
+
+async function fetchRecentMessages() {
+    try {
+        const response = await fetch(`/messages/recent`);
+        const messages = await response.json();
+
+        if (messages.length === 0) {
+            console.log('No chats started.');
+            noChats = document.createElement('p');
+            noChats.className = 'message-preview-none';
+            noChats.innerHTML = 'No chats started.';
+            message_container.appendChild(noChats);
+            return;
+        }
+
+        messages.forEach(message => {
+            const otherUser = message.sender === username ? message.receiver : message.sender;
+            const chatUrl = `chat.html?room=${message.room}&current_user=${username}&other_user=${otherUser}`
+            //convert timestamp to formatted date
+            const date = new Date(message.message_timestamp);
+            const formattedTime = date.toLocaleTimeString([], {
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit'
+            });
+
+            let recentMessageWrapper = document.createElement('a');
+            recentMessageWrapper.href = chatUrl;
+
+            let recentMessage = document.createElement('div');
+            recentMessage.className = 'message-preview';
+            recentMessage.innerHTML = `
+                <div class="message-content">
+                    <h3>${otherUser}</h3>
+                    <p class="message-preview-text">${message.message_text}</p>
+                </div>
+                <p class="message-preview-time">${formattedTime}</p>
+        `;
+
+        recentMessageWrapper.appendChild(recentMessage);
+        message_container.appendChild(recentMessageWrapper);
+        });
+    } catch (error) {
+        console.error("Error fetching recent messages:", error);
+    }
+}
+
+window.onload = fetchUsername;
