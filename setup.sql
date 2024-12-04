@@ -31,7 +31,8 @@ CREATE TABLE Listings (
     category TEXT,
     is_auction BOOLEAN DEFAULT FALSE, -- Indicates if listing is for auction
     auction_end_date TIMESTAMP,
-    status TEXT DEFAULT 'available'
+    status TEXT DEFAULT 'available',
+    winner_id INTEGER
 );
 
 -- Create Photos table

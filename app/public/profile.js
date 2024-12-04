@@ -74,10 +74,10 @@ async function fetchUserBiddings() {
                 const card = document.createElement("div");
                 card.className = "product-card";
                 card.innerHTML = `
-                    <a href="/product.html?id=${bidding.listing_id}">
+                    <a href="/bid_detail.html?id=${bidding.listing_id}">
                         <h3>${bidding.title}</h3>
                         <p>${bidding.description}</p>
-                        <p>Price: $${bidding.price}</p>
+                        <p>Minimum Bid: $${bidding.minimum_bid}</p>
                     </a>
                 `;
                 grid.appendChild(card);
@@ -88,6 +88,34 @@ async function fetchUserBiddings() {
     } catch{
         console.error("Error fetching user biddings:", error);
         document.getElementById("userBiddings").innerHTML = "<p>Error loading user biddings.</p>";
+    }
+}
+
+async function fetchAuctionsWon() {
+    try {
+        const response = await fetch("/api/user/auctions-won");
+        const auctions = await response.json();
+        const grid = document.getElementById("auctionsWonGrid");
+
+        if (auctions.length > 0) {
+            auctions.forEach(auction => {
+                const card = document.createElement("div");
+                card.className = "auction-card";
+                card.innerHTML = `
+                    <a href="/bid_detail.html?id=${auction.listing_id}">
+                        <h3>${auction.title}</h3>
+                        <p>${auction.description}</p>
+                        <p><strong>Ended:</strong> ${new Date(auction.auction_end_date).toLocaleString()}</p>
+                    </a>
+                `;
+                grid.appendChild(card);
+            });
+        } else {
+            grid.innerHTML = "<p>You haven't won any auctions yet.</p>";
+        }
+    } catch (error) {
+        console.error("Error fetching auctions won:", error);
+        document.getElementById("auctionsWonGrid").innerHTML = "<p>Error loading auctions won.</p>";
     }
 }
 
@@ -131,6 +159,8 @@ async function fetchProfilePicture() {
     }
 }
 
+// Fetch data on page load
 fetchProfilePicture();
 fetchUserListings();
-fetchUserBiddings()
+fetchUserBiddings();
+fetchAuctionsWon();

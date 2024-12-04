@@ -674,6 +674,89 @@ app.post("/place-bid", (req, res) => {
     });
 });
 
+// Function to check closed auctions
+const checkForEndedAuctions = () => {
+  pool.query(
+      `SELECT listing_id, auction_end_date FROM Listings WHERE is_auction = true AND status = 'open'`
+  )
+      .then(result => {
+          const now = new Date();
+
+          const endedAuctions = result.rows.filter(
+              auction => new Date(auction.auction_end_date) <= now
+          );
+
+          endedAuctions.forEach(auction => {
+              // Get the highest bid for the ended auction
+              pool.query(
+                  `SELECT user_id, bid_amount FROM Bids WHERE listing_id = $1 ORDER BY bid_amount DESC LIMIT 1`,
+                  [auction.listing_id]
+              )
+                  .then(bidResult => {
+                      if (bidResult.rows.length > 0) {
+                          const winnerId = bidResult.rows[0].user_id;
+
+                          // Update the auction to mark it as closed and set the winner
+                          return pool.query(
+                              `UPDATE Listings 
+                              SET status = 'closed', winner_id = $1 
+                              WHERE listing_id = $2`,
+                              [winnerId, auction.listing_id]
+                          );
+                      } else {
+                          // No bids, just close the auction
+                          return pool.query(
+                              `UPDATE Listings 
+                              SET status = 'closed' 
+                              WHERE listing_id = $1`,
+                              [auction.listing_id]
+                          );
+                      }
+                  })
+                  .then(() => {
+                      console.log(`Auction ${auction.listing_id} processed.`);
+                  })
+                  .catch(err => {
+                      console.error(`Error processing auction ${auction.listing_id}:`, err);
+                  });
+          });
+      })
+      .catch(err => {
+          console.error("Error fetching auctions:", err);
+      });
+};
+
+// Run the check periodically (e.g., every minute)
+setInterval(checkForEndedAuctions, 60 * 1000);
+
+// Endpoint for winning auctions
+app.get("/api/user/auctions-won", (req, res) => {
+  const username = tokenStorage[req.cookies.token];
+
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(403).json({ message: "Unauthorized" });
+          }
+          const userId = result.rows[0].user_id;
+
+          return pool.query(
+              `SELECT listing_id, title, description, auction_end_date 
+              FROM Listings 
+              WHERE winner_id = $1 
+              ORDER BY auction_end_date DESC`,
+              [userId]
+          );
+      })
+      .then(result => {
+          res.json(result.rows);
+      })
+      .catch(err => {
+          console.error("Error fetching auctions won:", err);
+          res.status(500).json({ message: "Failed to fetch auctions won" });
+      });
+});
+
 // Start the server
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
