@@ -767,6 +767,36 @@ app.get("/api/user/auctions-won", (req, res) => {
       });
 });
 
+app.delete("/api/listings/:id", authorize, (req, res) => {
+  const listingId = req.params.id;
+  const username = tokenStorage[req.cookies.token];
+
+  pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
+      .then(result => {
+          if (result.rows.length === 0) {
+              return res.status(403).json({ message: "Unauthorized" });
+          }
+          const userId = result.rows[0].user_id;
+          return pool.query("DELETE FROM ListingTags WHERE listing_id = $1", [listingId])
+              .then(() => {
+                  return pool.query("DELETE FROM Photos WHERE listing_id = $1", [listingId]);
+              })
+              .then(() => {
+                  return pool.query(
+                      `DELETE FROM Listings WHERE listing_id = $1 AND user_id = $2`,
+                      [listingId, userId]
+                  );
+              });
+      })
+      .then(() => {
+          res.status(200).json({ message: "Listing deleted successfully!" });
+      })
+      .catch(error => {
+          console.error("Error deleting listing:", error);
+          res.status(500).json({ message: "Failed to delete listing." });
+      });
+});
+
 // Start the server
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

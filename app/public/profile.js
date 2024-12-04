@@ -49,18 +49,45 @@ async function fetchUserListings() {
                 const card = document.createElement("div");
                 card.className = "product-card";
                 card.innerHTML = `
-                    <a href="/product.html?id=${listing.listing_id}">
-                        <h3>${listing.title}</h3>
-                        <p>${listing.description}</p>
-                        <p>Price: $${listing.price}</p>
-                    </a>
+                    <h3>${listing.title}</h3>
+                    <p>${listing.description}</p>
+                    <p>Price: $${listing.price}</p>
+                    <button onclick="deleteListing(${listing.listing_id})">Delete</button>
                 `;
                 grid.appendChild(card);
             });
-        } 
+        } else {
+            grid.innerHTML = "<p>No listings found.</p>";
+        }
     } catch (error) {
         console.error("Error fetching user listings:", error);
-        document.getElementById("userlistings").innerHTML = "<p>Error loading user listings.</p>";
+        grid.innerHTML = "<p>Error loading user listings.</p>";
+    }
+}
+
+// function editListing(listingId) {
+//     window.location.href = `/listing.html?edit=${listingId}`;
+// }
+
+// Send a request to delete the listing
+async function deleteListing(listingId) {
+    const confirmDelete = confirm("Are you sure you want to delete this listing?");
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(`/api/listings/${listingId}`, {
+            method: 'DELETE',
+        });
+        if (response.ok) {
+            alert("Listing deleted successfully!");
+            window.location.reload(); 
+        } else {
+            const errorData = await response.json();
+            alert(errorData.message || "Failed to delete listing.");
+        }
+    } catch (error) {
+        console.error("Error deleting listing:", error);
+        alert("An error occurred while deleting the listing.");
     }
 }
 async function fetchUserBiddings() {
