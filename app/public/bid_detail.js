@@ -96,7 +96,7 @@ socket.on('bid-update', (bid) => {
 function updateBidList(bid) {
     const bidList = document.getElementById('bidList');
     const listItem = document.createElement('li');
-    listItem.textContent = `User ${bid.user_id}: $${bid.bid_amount}`;
+    listItem.textContent = `${bid.username}: $${bid.bid_amount}`;
     bidList.prepend(listItem);
 }
 

@@ -575,8 +575,12 @@ app.get("/auction/:id", (req, res) => {
 
           // Fetch associated bids
           return pool.query(
-              `SELECT user_id, bid_amount, bid_time FROM Bids WHERE listing_id = $1 ORDER BY bid_time DESC`,
-              [listingId]
+              `SELECT b.user_id, b.bid_amount, b.bid_time, u.username 
+                FROM Bids b 
+                JOIN Users u ON b.user_id = u.user_id 
+                WHERE b.listing_id = $1 
+                ORDER BY b.bid_time DESC`,
+                [listingId]
           ).then(bidsResult => {
               auction.bids = bidsResult.rows;
 
@@ -661,7 +665,13 @@ app.post("/place-bid", (req, res) => {
     })
     .then((newBid) => {
       // Step 5: Notify all connected clients of the new bid
-      ioServer.emit("bid-update", newBid);
+      // Include the username in the bid-update event
+      ioServer.emit("bid-update", {
+        listing_id: newBid.listing_id,
+        bid_amount: newBid.bid_amount,
+        user_id: newBid.user_id,
+        username: username
+      });
 
       // Respond with success
       res.status(200).json({ success: true, bid: newBid });
