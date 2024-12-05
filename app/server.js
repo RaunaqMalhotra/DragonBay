@@ -335,6 +335,15 @@ app.post("/login", async (req, res) => {
     return res.sendStatus(400); // TODO
   }
 
+  // check if client is Safari
+  const userAgent = req.headers['user-agent'];
+  const isSafari = userAgent?.includes('Safari') && !userAgent?.includes('Chrome');
+  console.log("Is Safari", isSafari);
+  cookieOptions.sameSite = isSafari ? "lax" : "strict"; // adjusting based on Safari because of stricter cookie policies
+  cookieOptions.secure = req.secure || !isSafari; // adjusting based on HTTPS or Safari
+  console.log("Cookie options", cookieOptions);
+
+
   // generate login token, save in cookie
   let token = makeToken();
   console.log("Generated token", token);
