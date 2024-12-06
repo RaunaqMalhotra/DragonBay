@@ -12,7 +12,7 @@ async function fetchListings() {
             const card = document.createElement("div");
             card.className = "product-card";
             card.innerHTML = `
-                <a href="/product_page.html?id=${listing.listing_id}">
+                <a href="/product.html?id=${listing.listing_id}">
                     <h3>${listing.title}</h3>
                     <p>${listing.description}</p>
                     <p>Price: $${listing.price}</p>
@@ -24,8 +24,6 @@ async function fetchListings() {
         console.error("Error fetching listings:", error);
     }
 }
-
-
 
 // Load listings on page load
 window.onload = fetchListings;
