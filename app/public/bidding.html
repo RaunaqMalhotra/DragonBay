@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="navbar-placeholder"></div>
+
     <form id="biddingForm">
         <h2>List Your Item for Bidding</h2>
 
@@ -19,16 +21,21 @@
         <label for="minBidPrice">Minimum Bid Price</label>
         <input type="number" id="minBidPrice" name="minBidPrice" required>
 
+        <label for="minBidPrice">Minimum Bid Increase (the minimum price difference of each bid)</label>
+        <input type="number" id="minBidIncrease" name="minBidIncrease" required>
+        
         <label for="auctionEndDate">Auction End Date</label>
         <input type="datetime-local" id="auctionEndDate" name="auctionEndDate" required>
 
-        <label for="itemPhoto">Upload Photo</label>
-        <input type="file" id="itemPhoto" name="itemPhoto" accept="image/*" required>
+        <label for="itemPhotos">Upload Photos</label>
+        <input type="file" id="itemPhotos" name="itemPhotos" accept="image/*" multiple required>
 
         <button id="bidSubmit" type="submit">List for Bidding</button>
 
         <div id="message"></div>
     </form>
     <script src="bidding.js"></script>
+    <script src="navbar.js"></script>
+
 </body>
 </html>

@@ -7,11 +7,26 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="navbar-placeholder"></div>
+
     <div class="top-right">
         <button id="message-button">💬</button>
     </div>
+
     <h1>All Listings</h1>
+
+    <!-- Search bar -->
+    <input 
+        type="text" 
+        id="searchBar" 
+        placeholder="Search listings..." 
+        class="search-bar"
+        oninput="filterListings()"
+    >
+
     <div class="product-grid" id="productGrid"></div>
+
     <script src="index.js"></script>
+    <script src="navbar.js"></script>
 </body>
 </html>

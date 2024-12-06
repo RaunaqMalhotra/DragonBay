@@ -7,6 +7,8 @@
 </head>
 <body>
 
+<div id="navbar-placeholder"></div>
+
 <div class="container">
 	<h1>Welcome to the Listings Page of DragonBay - your one stop shop for all things Drexel!</h1>
 	
@@ -31,13 +33,13 @@
 		
 		<div class="form-group">
 			<label for="itemTags">Tags (separated by space)</label>
-			<input type="text" id="itemTags" name="itemTags">
+			<input type="text" id="itemTags" name="itemTags" required>
 		</div>
 		
 		<div class="form-group">
-			<label for="itemPhoto">Upload Photo</label>
-			<input type="file" id="itemPhoto" name="itemPhoto" accept="image/*" required>
-		</div>
+			<label for="itemPhotos">Upload Photos</label>
+			<input type="file" id="itemPhotos" name="itemPhotos" accept="image/*" multiple required>
+		</div>		
 		
 		<button type="submit">Submit Listing</button>
 	
@@ -47,6 +49,7 @@
 <div id="message"></div>
 
 <script src="listing.js"></script>
+<script src="navbar.js"></script>
 
 </body>
 </html>

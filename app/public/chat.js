@@ -110,7 +110,7 @@ async function fetchChatHistory() {
         }
     } catch (error) {
         console.error('Error fetching messages:', error);
-        document.querySelector('.message-container').innerHTML = `<p class="message-preview-none">Error loading messages.</p>`;
+        document.querySelector('.chat-display').innerHTML = `<p class="message-preview-none">Error loading messages.</p>`;
     }
 }
 
