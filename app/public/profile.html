@@ -11,6 +11,11 @@
     <div id="navbar-placeholder"></div>
 
     <h1>Your Profile</h1>
+    <div class="profile-container">
+        <div class="profile-picture">
+            <img id="profilePictureDisplay" alt="Profile Picture">
+        </div>
+    </div>
     <div>
         <p><strong>Username:</strong> <span id="username"></span></p>
         <p><strong>Email:</strong> <span id="email"></span></p>
@@ -20,6 +25,21 @@
         <input type="password" id="password" name="password" required>
         <button type="submit">Change Password</button>
     </form>
+    <form id="profilePictureForm" enctype="multipart/form-data">
+        <input type="file" id="profilePicture" name="profilePicture" accept="image/*" required>
+        <button type="submit">Upload</button>
+    </form>
+    <p id="uploadMessage"></p>
+    
+    <h1>Your Listings</h1>
+    <div class="listing-grid" id="listingGrid"></div>
+
+    <h1>Your Biddings</h1>
+    <div class="bidding-grid" id="biddingGrid"></div>
+
+    <h1>Auctions Won</h1>
+    <div class="auction-won-grid" id="auctionsWonGrid"></div>
+    
     <script src="profile.js"></script>
     <script src="navbar.js"></script>
 
