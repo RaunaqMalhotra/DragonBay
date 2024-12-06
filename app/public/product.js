@@ -1,8 +1,13 @@
 /* CLIENT SIDE CODE FOR product.html */
 
+let buyer_username = '';
+let room = '';
+let seller_username = '';
+
 // Extract product ID from URL
 const urlParams = new URLSearchParams(window.location.search);
 const productId = urlParams.get("id");
+const button = document.querySelector('.contact-seller');
 
 function fetchProductDetails() {
     fetch(`/api/listings/${productId}`)
@@ -14,6 +19,12 @@ function fetchProductDetails() {
         })
         .then(product => {
             if (product) {
+                seller_username = product.seller_username;
+                buyer_username = product.account_username;
+                console.log('Seller:', seller_username);
+                console.log('Buyer:', buyer_username);
+                room = buyer_username+'_'+seller_username;
+
                 // Display product details
                 const productDetails = document.getElementById("productDetails");
                 productDetails.innerHTML = `
@@ -52,4 +63,11 @@ if (productId) {
     fetchProductDetails();
 } else {
     document.getElementById("productDetails").innerHTML = "<p>No product ID provided.</p>";
+}
+
+if (button) {
+    button.addEventListener('click', () => {
+        //TODO: redirection should not happen if any of user is undefined
+        window.location.href = `chat.html?room=${room}&current_user=${buyer_username}&other_user=${seller_username}`;
+    });
 }

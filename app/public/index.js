@@ -1,3 +1,7 @@
+document.getElementById("message-button").addEventListener("click", function() {
+    window.location.href = "/messages.html";
+});
+
 let allListings = []; // Store all fetched listings
 
 async function fetchListings() {
