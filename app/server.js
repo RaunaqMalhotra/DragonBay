@@ -7,12 +7,13 @@ const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const cors = require("cors"); // Import cors
 const http = require('http'); // To create the server
-const { Server } = require('socket.io'); // Import Socket.IO
 
 const server = http.createServer(app); // Create HTTP server
+const { Server } = require('socket.io');
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 const hostname = "localhost";
+const ADMIN = "Admin";
 
 const env = require("../config/env.json");
 const Pool = pg.Pool;
@@ -54,6 +55,22 @@ ioServer.on("connection", (socket) => {
   });
 });
 
+app.use((req, res, next) => {
+  const token = req.cookies.token;
+
+  if (token && tokenStorage[token]) {
+      req.username = tokenStorage[token];
+  }
+  next();
+});
+
+//state 
+const UsersState = {
+  users: [],
+  setUsers: function(newUsersArray) {
+      this.users = newUsersArray;
+  }
+};
 
 // Serve the login.html page
 app.get("/", (req, res) => {
@@ -88,6 +105,7 @@ app.get('/product.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'product.html'));
 });
 
+app.use(cors());
 app.use(express.static("public"));
 
 // Set storage engine
@@ -388,17 +406,21 @@ app.get("/api/listings", async (req, res) => {
   }
 });
 
+
 // Endpoint to fetch a single listing by ID
 app.get("/api/listings/:id", async (req, res) => {
   const listingId = req.params.id;
+  const account_username = req.username;
 
   try {
       // Fetch listing details
       const listingResult = await pool.query(
-          `SELECT listing_id, title, description, price, listing_date, status 
-          FROM Listings 
-          WHERE listing_id = $1`,
-          [listingId]
+        `SELECT l.*, u.username AS seller_username
+        FROM Listings l 
+        LEFT JOIN Users u 
+        ON l.user_id = u.user_id
+        WHERE listing_id = $1`,
+        [listingId]
       );
 
       if (listingResult.rows.length === 0) {
@@ -418,7 +440,7 @@ app.get("/api/listings/:id", async (req, res) => {
       const photos = photosResult.rows.map(photo => photo.photo_url);
 
       // Combine listing details with photos
-      res.json({ ...listing, photos });
+      res.json({ ...listing, photos, account_username });
   } catch (err) {
       console.error("Error fetching listing details:", err);
       res.status(500).json({ error: "Database error" });
@@ -501,6 +523,15 @@ app.post("/login", async (req, res) => {
     console.log("Credentials didn't match");
     return res.sendStatus(400); // TODO
   }
+
+  // check if client is Safari
+  const userAgent = req.headers['user-agent'];
+  const isSafari = userAgent?.includes('Safari') && !userAgent?.includes('Chrome');
+  console.log("Is Safari", isSafari);
+  cookieOptions.sameSite = isSafari ? "lax" : "strict"; // adjusting based on Safari because of stricter cookie policies
+  cookieOptions.secure = req.secure || !isSafari; // adjusting based on HTTPS or Safari
+  console.log("Cookie options", cookieOptions);
+
 
   // generate login token, save in cookie
   let token = makeToken();
@@ -802,8 +833,202 @@ server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
 
-/*
-app.listen(port, hostname, () => {
-  console.log(`Listening at: http://${hostname}:${port}`);
+
+// Endpoint to fetch recent messages for a specific user
+app.get("/messages/recent", async (req, res) => {
+  const username = req.username;
+  console.log(`Fetching previous messages for user: ${username}`);
+  try {
+    const activeRooms = await getRoomsWithUser(username);
+    console.log(activeRooms.rows);
+    if (activeRooms.rows.length > 0) {
+      const allMessages = [];
+      for (const activeRoom of activeRooms.rows) {
+        const recentMessages = await pool.query(
+          `SELECT * 
+          FROM Messages 
+          WHERE room = $1 
+          ORDER BY message_timestamp DESC
+          LIMIT 1`,
+          [activeRoom.room]);
+        console.log(recentMessages.rows);
+        allMessages.push(...recentMessages.rows);
+      }
+      return res.json(allMessages);
+    } else {
+      console.log('No messages found');
+      res.json({ message: "No messages found" });
+    }
+  } catch (error) {
+    console.error("Error fetching messages for preview:", error);
+    res.status(500).json({message: "Failed to fetch messages"});
+  }
 });
-*/
+
+app.get('/messages/chat_history/:room', async (req, res) => {
+  console.log('Fetching chat history');
+  const username = req.username;
+  const room = req.params.room;
+  try {
+      const result = await pool.query(
+          `SELECT * FROM Messages WHERE room = $1 ORDER BY message_timestamp ASC`,
+          [room]
+      );
+
+      // Mark messages as read
+      await pool.query(
+          `UPDATE Messages SET is_read = TRUE WHERE receiver = $1 AND is_read = FALSE`,
+          [username]
+      );
+
+      return res.json(result.rows);
+  } catch (error) {
+      console.error("Error fetching previous messages:", error);
+      return res.status(500).json({ message: "Failed to fetch previous messages" });
+  }
+});
+
+
+app.get('/api/username', authorize, (req, res) => {
+  if (req.username) {
+    console.log(`User ${req.username} is authenticated`);
+    return res.json({ username: req.username });
+  } else {
+    console.log('User is not authenticated');
+    res.status(401).json({ error: 'Not authenticated' });
+  }
+});
+
+//Websockets endpoint for when user connects to server for messsaging
+ioServer.on('connection', (socket) => {
+  console.log(`User ${socket.id} connected`);
+
+  socket.on('enterRoom', ({ name, room }) => {
+      console.log(`User ${socket.id} is entering room ${room} with name ${name}`);
+      
+      //leave previous room
+      const prevRoom = getUser(socket.id)?.room;
+
+      if (prevRoom) {
+          socket.leave(prevRoom);
+      }
+
+      const user = activateUser(socket.id, name, room);
+
+      //updates previous room's user list
+      if (prevRoom) {
+          ioServer.to(prevRoom).emit('userList', {
+              users: getUsersInRoom(prevRoom)
+          });
+      }
+
+      //join room
+      socket.join(user.room);
+      console.log(`User ${socket.id} joined room ${user.room}`);
+      
+      //update user list for new room
+      ioServer.to(user.room).emit('userList', {
+          users: getUsersInRoom(user.room)
+      });
+  });
+
+  //Websockets endpoint for when user disconnects from server
+  socket.on('disconnect', () => {
+      const user = getUser(socket.id);
+      userExitsChat(socket.id);
+  
+      if (user) {
+          ioServer.to(user.room).emit('userList', {
+              users: getUsersInRoom(user.room)
+          });
+      }
+  });
+
+  //Websockets endpoint for when user sends a message
+  socket.on('message', async ({ name, text }) => {
+    console.log(`Message received from ${name}: ${text}`);
+    if (name !== ADMIN) {
+        const room = getUser(socket.id)?.room;
+        if (room) {
+          const msg = buildMsg(name, text);
+          const room_members = getUsersInRoom(room);
+          const sender = name;
+          const receiver = room.split('_').find(part => part !== sender);
+          // Check if the receiver is online
+          const isReceiverOnline = room_members.some(user => user.name === receiver);
+
+          try {
+              await pool.query(
+                  `INSERT INTO Messages (room, sender, receiver, message_text, message_timestamp, is_read) 
+                  VALUES ($1, $2, $3, $4, $5, $6);`,
+                  [room, sender, receiver, msg.text, msg.time, isReceiverOnline]
+              );              
+              ioServer.to(room).emit('message', msg);
+              console.log('Message broadcasted:', msg);
+          } catch (error) {
+              console.error("Error inserting message:", error);
+          }
+      }
+    } else {
+        const room = getUser(socket.id)?.room;
+        if (room) {
+            const msg = buildMsg(name, text);
+            ioServer.to(room).emit('message', msg);
+        }
+    }
+  });
+
+  //Websockets endpoint for detecting user typing activity
+  socket.on('activity', (name) => {
+      const room = getUser(socket.id)?.room;
+      if (room) {
+          socket.broadcast.to(room).emit('activity', name);
+      }
+  });
+});
+
+function getRoomsWithUser(username) {
+  return pool.query(
+    `SELECT DISTINCT room FROM Messages WHERE sender = $1 OR receiver = $1`,
+    [username]
+  );
+}
+
+//function to build message object for transmission
+function buildMsg(name, text) {
+  return {
+      name,
+      text,
+      time: new Date().toISOString()
+  };
+}
+
+//functions to manage users (and user state)
+
+//create user object and amend user state
+function activateUser(id, name, room) {
+  const user = { id, name, room };
+  UsersState.setUsers([
+      ...UsersState.users.filter(user => user.id !== id), 
+      user
+  ]);
+  console.log(`User activated: ${JSON.stringify(user)}`);
+  return user;
+}
+
+//amend user state by removing user
+function userExitsChat(id) {
+  UsersState.setUsers(
+      UsersState.users.filter(user => user.id !== id)
+  );
+}
+
+//get user object by id
+function getUser(id) {
+  return UsersState.users.find(user => user.id === id);
+}
+
+//get all users in a room
+function getUsersInRoom(room) {
+  return UsersState.users.filter(user => user.room === room);
+}
