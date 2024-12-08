@@ -1,3 +1,18 @@
+/* Main Chat Section */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 90%;
+}
+
 /* General Styling */
 body {
     font-family: 'Arial', sans-serif;
@@ -24,21 +39,6 @@ body {
     text-transform: uppercase;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
-
-/* Main Chat Section */
-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    max-width: 800px;
-    margin: auto;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
 /* Chat Display */
 .chat-display {
     flex: 1;
