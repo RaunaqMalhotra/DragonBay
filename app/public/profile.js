@@ -114,6 +114,7 @@ async function fetchUserBiddings() {
                         <p>${bidding.description}</p>
                         <p>Minimum Bid: $${bidding.minimum_bid}</p>
                     </a>
+                    <button onclick="deleteListing(${bidding.listing_id})">Delete</button>
                 `;
                 grid.appendChild(card);
             });
@@ -125,6 +126,8 @@ async function fetchUserBiddings() {
         document.getElementById("userBiddings").innerHTML = "<p>Error loading user biddings.</p>";
     }
 }
+
+
 
 async function fetchAuctionsWon() {
     try {
