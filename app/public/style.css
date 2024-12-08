@@ -62,10 +62,13 @@ a:hover {
 
 /* Container for the Product Grid */
 .product-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive columns */
+    gap: 20px; /* Space between cards */
+    padding: 20px; /* Space around the grid */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto; /* Center grid on the page */
 }
 
 .profile-picture img {
@@ -141,37 +144,34 @@ form label {
 
 .product-card {
     background-color: #ffffff;
-    border: 1px solid #f5af19; /* Gold border */
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    text-align: center;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #ddd; /* Light border around each card */
+    border-radius: 10px; /* Rounded corners for a modern look */
+    padding: 15px; /* Padding inside the card */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px); /* Slightly lift card on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
 }
 
 .product-card h3 {
-    font-size: 20px;
-    color: #004085;
-    margin-bottom: 10px;
+    font-size: 18px;
+    color: #004085; /* Deep blue */
+    margin: 10px 0 5px; /* Spacing above and below */
 }
 
 .product-card p {
     font-size: 14px;
-    color: #555;
-    margin: 5px 0;
+    color: #555; /* Dark gray */
+    margin: 5px 0; /* Spacing between paragraphs */
 }
 
-.product-card p.price {
+.product-card .price {
     font-weight: bold;
     font-size: 16px;
-    color: #333;
+    color: #f5af19; /* Gold */
     margin-top: 10px;
 }
 
@@ -188,6 +188,29 @@ form label {
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    border-bottom: 1px solid #ddd; /* Separator between image and text */
+    margin-bottom: 10px;
+    border-radius: 10px 10px 0 0; /* Rounded corners for the top of the card */
+}
+
+.product-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 150px;
+    background-color: #f5f5f5; /* Light gray background */
+    color: #999; /* Gray text */
+    font-size: 14px;
+    border-bottom: 1px solid #ddd; /* Separator line */
+    margin-bottom: 10px;
+    border-radius: 10px 10px 0 0; /* Matches image styling */
 }
 
 .auction-images {

@@ -395,10 +395,19 @@ app.post("/add-bid-listing", listingUpload.array("photos", 10), (req, res) => {
       });
 });
 
-// Endpoint to fetch all non-auction listings
+// Endpoint to fetch all non-auction listings with photos
 app.get("/api/listings", async (req, res) => {
   try {
-    let result = await pool.query("SELECT * FROM Listings WHERE is_auction = false");
+    const result = await pool.query(
+      `SELECT l.*,
+              ARRAY_AGG(p.photo_url) AS photos
+       FROM Listings l
+       LEFT JOIN Photos p
+       ON l.listing_id = p.listing_id
+       WHERE l.is_auction = false
+       GROUP BY l.listing_id`
+    );
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching listings:", err);
