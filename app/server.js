@@ -263,10 +263,16 @@ app.get("/api/user/listings", (req, res) => {
         } 
         const userId = result.rows[0].user_id;
         console.log("User ID:", userId);
-  return pool.query(
-    `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = FALSE ORDER BY listing_date DESC`,
+        return pool.query(
+          `SELECT l.*,
+                  ARRAY_AGG(p.photo_url) AS photos
+           FROM Listings l
+           LEFT JOIN Photos p ON l.listing_id = p.listing_id
+           WHERE l.user_id = $1 AND l.is_auction = FALSE
+           GROUP BY l.listing_id
+           ORDER BY l.listing_date DESC`,
           [userId]
-  );
+      );
     })
   .then(result => {
       res.json(result.rows); 
@@ -286,10 +292,16 @@ app.get("/api/user/biddings", (req, res) => {
         } 
         const userId = result.rows[0].user_id;
         console.log("User ID:", userId);
-  return pool.query(
-      `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = TRUE ORDER BY listing_date DESC`,
-      [userId]
-  );
+        return pool.query(
+          `SELECT l.*,
+                  ARRAY_AGG(p.photo_url) AS photos
+           FROM Listings l
+           LEFT JOIN Photos p ON l.listing_id = p.listing_id
+           WHERE l.user_id = $1 AND l.is_auction = TRUE
+           GROUP BY l.listing_id
+           ORDER BY l.listing_date DESC`,
+          [userId]
+      );
     })
   .then(result => {
       res.json(result.rows); 
