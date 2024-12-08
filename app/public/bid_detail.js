@@ -73,7 +73,7 @@ function fetchAuctionDetails() {
             if (auction.bids && auction.bids.length > 0) {
                 auction.bids.forEach(bid => {
                     let listItem = document.createElement('li');
-                    listItem.textContent = `${username}: $${bid.bid_amount}`;
+                    listItem.textContent = `${bid.username}: $${bid.bid_amount}`;
                     bidList.appendChild(listItem);
                 });
             } else {

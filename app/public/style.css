@@ -132,7 +132,7 @@ form label {
 }
 
 /* Listing Grid */
-.listing-grid, .bidding-grid {
+.listing-grid, .bidding-grid, .auction-won-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
@@ -226,13 +226,6 @@ form label {
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.auction-won-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
 }
 
 .auction-card {
