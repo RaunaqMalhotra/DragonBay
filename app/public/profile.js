@@ -53,6 +53,7 @@ async function fetchUserListings() {
                     : `<div class="product-placeholder">No image available</div>`;
 
                 card.innerHTML = `
+                <a href="/product.html?id=${listing.listing_id}">
                     ${imageHtml}
                     <h3>${listing.title}</h3>
                     <p>${listing.description}</p>
