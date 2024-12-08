@@ -586,7 +586,15 @@ app.get("/auctions", (req, res) => {
   console.log("calling /auctions");
 
   pool.query(
-    "SELECT * FROM Listings WHERE is_auction = true AND status = 'open' ORDER BY auction_end_date ASC"
+    `SELECT l.*,
+            ARRAY_AGG(p.photo_url) AS photos
+     FROM Listings l
+     LEFT JOIN Photos p
+     ON l.listing_id = p.listing_id
+     WHERE l.is_auction = true 
+       AND l.status = 'open'
+     GROUP BY l.listing_id
+     ORDER BY l.auction_end_date ASC`
   )
     .then(result => {
       res.json(result.rows);
@@ -596,6 +604,7 @@ app.get("/auctions", (req, res) => {
       res.status(500).json({ error: "Database error" });
     });
 });
+
 
 // Endpoint to fetch details of a specific auction
 app.get("/auction/:id", (req, res) => {
