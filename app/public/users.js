@@ -21,11 +21,11 @@ signupForm.addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Signup successful! You are now logged in.");
             // You could redirect the user to a new page or display a welcome message
-            window.location.href = "http://localhost:3000";
+            window.location.href = "index.html";
 
         } else {
-             const errorData = await response.json();
-             alert(`Signup failed: ${errorData.error || "Try a different username."}`);
+            const errorData = await response.json();
+            alert(`Signup failed: ${errorData.error || "Try a different username."}`);
         }
     } catch (error) {
         console.error("Error:", error);
@@ -54,7 +54,7 @@ loginForm.addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Login successful!");
             // Redirect to a protected page or display a logged-in message
-            window.location.href = "http://localhost:3000/index.html";
+            window.location.href = "index.html";
 
         } else {
             alert("Login failed. Check your username and password.");

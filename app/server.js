@@ -74,8 +74,8 @@ const UsersState = {
 
 // Serve the login.html page
 app.get("/", (req, res) => {
-  // Re-direct "/" to login.html
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); // login.html is a placeholder
+  // Re-direct "/" to welcome.html
+  res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
 });
 
 
@@ -84,7 +84,7 @@ let authorize = (req, res, next) => {
   let { token } = req.cookies;
   console.log(token, tokenStorage);
   if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-    return res.redirect('/login.html');
+    return res.redirect('/welcome.html');
   }
   next();
 };
