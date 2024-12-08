@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-
 </head>
 <body>
     <div id="navbar-placeholder"></div>
@@ -20,15 +19,23 @@
         <p><strong>Username:</strong> <span id="username"></span></p>
         <p><strong>Email:</strong> <span id="email"></span></p>
     </div>
-    <form onsubmit="updatePassword(event)">
-        <label for="password">New Password:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">Change Password</button>
-    </form>
-    <form id="profilePictureForm" enctype="multipart/form-data">
-        <input type="file" id="profilePicture" name="profilePicture" accept="image/*" required>
-        <button type="submit">Upload</button>
-    </form>
+    
+    <button onclick="toggleDropdown('passwordDropdown')">Change Password</button>
+    <div id="passwordDropdown" class="dropdown-content">
+        <form onsubmit="updatePassword(event)">
+            <label for="password">New Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Change Password</button>
+        </form>
+    </div>
+
+    <button onclick="toggleDropdown('profilePictureDropdown')">Change Profile Picture</button>
+    <div id="profilePictureDropdown" class="dropdown-content">
+        <form id="profilePictureForm" enctype="multipart/form-data">
+            <input type="file" id="profilePicture" name="profilePicture" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
     <p id="uploadMessage"></p>
     
     <h1>Your Listings</h1>
@@ -42,6 +49,11 @@
     
     <script src="profile.js"></script>
     <script src="navbar.js"></script>
-
+    <script>
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+    </script>
 </body>
 </html>

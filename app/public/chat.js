@@ -72,17 +72,16 @@ function displayMessage(name, text, time) {
 
     //message sent by sender
     if (name === userName) {
-        postElement.className = 'post post--left';
+        postElement.className = 'post--left';
     }
 
     //message sent by receiver
     if (name !== userName && name !== 'Admin') {
-        postElement.className = 'post post--right';
+        postElement.className = 'post--right';
     }
 
     if (name !== 'Admin') {
-        postElement.innerHTML = `
-            <div class = "post__header ${name === userName ? 'post__header--user' : 'post__header--reply'}">
+        postElement.innerHTML = `<div class = "message-header">
             <span class = "post_header--name">${name}</span>
             <span class = "post_header--time">${formattedTime}</span>
             </div>

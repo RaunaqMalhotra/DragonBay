@@ -105,6 +105,30 @@ app.get('/product.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'product.html'));
 });
 
+app.get('/bid_detail.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bid_detail.html'));
+});
+
+app.get('/bid_product.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bid_product.html'));
+});
+
+app.get('/bidding.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bidding.html'));
+});
+
+app.get('/chat.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+app.get('/index.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/messages.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'messages.html'));
+});
+
 app.use(cors());
 app.use(express.static("public"));
 
@@ -263,10 +287,16 @@ app.get("/api/user/listings", (req, res) => {
         } 
         const userId = result.rows[0].user_id;
         console.log("User ID:", userId);
-  return pool.query(
-    `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = FALSE ORDER BY listing_date DESC`,
+        return pool.query(
+          `SELECT l.*,
+                  ARRAY_AGG(p.photo_url) AS photos
+           FROM Listings l
+           LEFT JOIN Photos p ON l.listing_id = p.listing_id
+           WHERE l.user_id = $1 AND l.is_auction = FALSE
+           GROUP BY l.listing_id
+           ORDER BY l.listing_date DESC`,
           [userId]
-  );
+      );
     })
   .then(result => {
       res.json(result.rows); 
@@ -286,10 +316,16 @@ app.get("/api/user/biddings", (req, res) => {
         } 
         const userId = result.rows[0].user_id;
         console.log("User ID:", userId);
-  return pool.query(
-      `SELECT * FROM Listings WHERE user_id = $1 AND is_auction = TRUE ORDER BY listing_date DESC`,
-      [userId]
-  );
+        return pool.query(
+          `SELECT l.*,
+                  ARRAY_AGG(p.photo_url) AS photos
+           FROM Listings l
+           LEFT JOIN Photos p ON l.listing_id = p.listing_id
+           WHERE l.user_id = $1 AND l.is_auction = TRUE
+           GROUP BY l.listing_id
+           ORDER BY l.listing_date DESC`,
+          [userId]
+      );
     })
   .then(result => {
       res.json(result.rows); 
@@ -395,10 +431,19 @@ app.post("/add-bid-listing", listingUpload.array("photos", 10), (req, res) => {
       });
 });
 
-// Endpoint to fetch all non-auction listings
+// Endpoint to fetch all non-auction listings with photos
 app.get("/api/listings", async (req, res) => {
   try {
-    let result = await pool.query("SELECT * FROM Listings WHERE is_auction = false");
+    const result = await pool.query(
+      `SELECT l.*,
+              ARRAY_AGG(p.photo_url) AS photos
+       FROM Listings l
+       LEFT JOIN Photos p
+       ON l.listing_id = p.listing_id
+       WHERE l.is_auction = false
+       GROUP BY l.listing_id`
+    );
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching listings:", err);
@@ -577,7 +622,15 @@ app.get("/auctions", (req, res) => {
   console.log("calling /auctions");
 
   pool.query(
-    "SELECT * FROM Listings WHERE is_auction = true AND status = 'open' ORDER BY auction_end_date ASC"
+    `SELECT l.*,
+            ARRAY_AGG(p.photo_url) AS photos
+     FROM Listings l
+     LEFT JOIN Photos p
+     ON l.listing_id = p.listing_id
+     WHERE l.is_auction = true 
+       AND l.status = 'open'
+     GROUP BY l.listing_id
+     ORDER BY l.auction_end_date ASC`
   )
     .then(result => {
       res.json(result.rows);
@@ -587,6 +640,7 @@ app.get("/auctions", (req, res) => {
       res.status(500).json({ error: "Database error" });
     });
 });
+
 
 // Endpoint to fetch details of a specific auction
 app.get("/auction/:id", (req, res) => {
@@ -782,12 +836,15 @@ app.get("/api/user/auctions-won", (req, res) => {
           const userId = result.rows[0].user_id;
 
           return pool.query(
-              `SELECT listing_id, title, description, auction_end_date 
-              FROM Listings 
-              WHERE winner_id = $1 
-              ORDER BY auction_end_date DESC`,
-              [userId]
-          );
+            `SELECT l.listing_id, l.title, l.description, l.auction_end_date,
+                    ARRAY_AGG(p.photo_url) AS photos
+             FROM Listings l
+             LEFT JOIN Photos p ON l.listing_id = p.listing_id
+             WHERE l.winner_id = $1
+             GROUP BY l.listing_id
+             ORDER BY l.auction_end_date DESC`,
+            [userId]
+        );
       })
       .then(result => {
           res.json(result.rows);

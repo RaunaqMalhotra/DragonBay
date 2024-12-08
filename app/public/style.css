@@ -33,14 +33,64 @@ a:hover {
 }
 /* Container for the Profile Section */
 .container {
-    max-width: 90%;
-    width: 800px;
+    max-width: 800px;
     padding: 30px;
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-    margin: 24px;
+    margin: 40px auto;
     border: 2px solid #f5af19; /* Gold border for emphasis */
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    color: #004085; /* Deep blue for labels */
+    margin-bottom: 8px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: #444;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+    border-color: #004085; /* Blue border for focus */
+    background-color: #ffffff;
+    outline: none;
+}
+
+button[type="submit"] {
+    background-color: #004085;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Profile Container */
@@ -62,10 +112,13 @@ a:hover {
 
 /* Container for the Product Grid */
 .product-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive columns */
+    gap: 20px; /* Space between cards */
+    padding: 20px; /* Space around the grid */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto; /* Center grid on the page */
 }
 
 .profile-picture img {
@@ -129,49 +182,46 @@ form label {
 }
 
 /* Listing Grid */
-.listing-grid, .bidding-grid {
+.listing-grid, .bidding-grid, .auction-won-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     padding: 20px;
     width: 100%;
     max-width: 1200px;
-    margin-bottom: 20px;
+    margin: 0 auto;
 }
 
 .product-card {
     background-color: #ffffff;
-    border: 1px solid #f5af19; /* Gold border */
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    text-align: center;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #ddd; /* Light border around each card */
+    border-radius: 10px; /* Rounded corners for a modern look */
+    padding: 15px; /* Padding inside the card */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px); /* Slightly lift card on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
 }
 
 .product-card h3 {
-    font-size: 20px;
-    color: #004085;
-    margin-bottom: 10px;
+    font-size: 18px;
+    color: #004085; /* Deep blue */
+    margin: 10px 0 5px; /* Spacing above and below */
 }
 
 .product-card p {
     font-size: 14px;
-    color: #555;
-    margin: 5px 0;
+    color: #555; /* Dark gray */
+    margin: 5px 0; /* Spacing between paragraphs */
 }
 
-.product-card p.price {
+.product-card .price {
     font-weight: bold;
     font-size: 16px;
-    color: #333;
+    color: #f5af19; /* Gold */
     margin-top: 10px;
 }
 
@@ -190,6 +240,29 @@ form label {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.product-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    border-bottom: 1px solid #ddd; /* Separator between image and text */
+    margin-bottom: 10px;
+    border-radius: 10px 10px 0 0; /* Rounded corners for the top of the card */
+}
+
+.product-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 150px;
+    background-color: #f5f5f5; /* Light gray background */
+    color: #999; /* Gray text */
+    font-size: 14px;
+    border-bottom: 1px solid #ddd; /* Separator line */
+    margin-bottom: 10px;
+    border-radius: 10px 10px 0 0; /* Matches image styling */
+}
+
 .auction-images {
     display: flex;
     flex-wrap: wrap;
@@ -205,12 +278,6 @@ form label {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.auction-won-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
 
 .auction-card {
     background-color: #ffffff;
@@ -370,4 +437,13 @@ nav ul li a {
     position: absolute;
     top: 10px;
     right: 30px;
+}
+
+.dropdown-content {
+    display: none; 
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 5px;
 }

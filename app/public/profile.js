@@ -48,7 +48,13 @@ async function fetchUserListings() {
             listings.forEach(listing => {
                 const card = document.createElement("div");
                 card.className = "product-card";
+                const imageHtml = listing.photos && listing.photos.length > 0
+                    ? `<img src="/${listing.photos[0]}" alt="${listing.title}" class="product-image">`
+                    : `<div class="product-placeholder">No image available</div>`;
+
                 card.innerHTML = `
+                <a href="/product.html?id=${listing.listing_id}">
+                    ${imageHtml}
                     <h3>${listing.title}</h3>
                     <p>${listing.description}</p>
                     <p>Price: $${listing.price}</p>
@@ -65,9 +71,6 @@ async function fetchUserListings() {
     }
 }
 
-// function editListing(listingId) {
-//     window.location.href = `/listing.html?edit=${listingId}`;
-// }
 
 // Send a request to delete the listing
 async function deleteListing(listingId) {
@@ -100,12 +103,18 @@ async function fetchUserBiddings() {
             biddings.forEach(bidding => {
                 const card = document.createElement("div");
                 card.className = "product-card";
+                const imageHtml = bidding.photos && bidding.photos.length > 0
+                    ? `<img src="/${bidding.photos[0]}" alt="${bidding.title}" class="product-image">`
+                    : `<div class="product-placeholder">No image available</div>`;
+
                 card.innerHTML = `
                     <a href="/bid_detail.html?id=${bidding.listing_id}">
+                        ${imageHtml}
                         <h3>${bidding.title}</h3>
                         <p>${bidding.description}</p>
                         <p>Minimum Bid: $${bidding.minimum_bid}</p>
                     </a>
+                    <button onclick="deleteListing(${bidding.listing_id})">Delete</button>
                 `;
                 grid.appendChild(card);
             });
@@ -118,6 +127,8 @@ async function fetchUserBiddings() {
     }
 }
 
+
+
 async function fetchAuctionsWon() {
     try {
         const response = await fetch("/api/user/auctions-won");
@@ -128,11 +139,16 @@ async function fetchAuctionsWon() {
             auctions.forEach(auction => {
                 const card = document.createElement("div");
                 card.className = "auction-card";
+                const imageHtml = auction.photos && auction.photos.length > 0
+                    ? `<img src="/${auction.photos[0]}" alt="${auction.title}" class="product-image">`
+                    : `<div class="product-placeholder">No image available</div>`;
+
                 card.innerHTML = `
                     <a href="/bid_detail.html?id=${auction.listing_id}">
+                        ${imageHtml}
                         <h3>${auction.title}</h3>
                         <p>${auction.description}</p>
-                        <p><strong>Ended:</strong> ${new Date(auction.auction_end_date).toLocaleString()}</p>
+                        <p>Auction Ended: ${new Date(auction.auction_end_date).toLocaleString()}</p>
                     </a>
                 `;
                 grid.appendChild(card);
