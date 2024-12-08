@@ -24,9 +24,18 @@ h1 {
     margin-bottom: 20px;
     text-align: center;
 }
+
+h2 {
+    font-size: 28px;
+    color: #f5af19; /* Dark blue for headings */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 a {
-    text-decoration: none; /* Removes underlining from all anchor tags */
-    color: inherit; /* Ensures the text color matches its parent container */
+    text-decoration: underline; /* Removes underlining from all anchor tags */
+    color: #004085; /* Ensures the text color matches its parent container */
 }
 a:hover {
     text-decoration: underline; /* Optional: Add underlining on hover for clarity */
@@ -154,6 +163,28 @@ button:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Contact Seller Button */
+.contact-seller {
+    background-color: #f5af19;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: block;
+    margin: 20px auto;
+}
+
+.contact-seller:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Inputs and Forms */
 input[type="text"],
 input[type="password"],
@@ -228,13 +259,14 @@ form label {
 .product-images {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
 .product-images img {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -242,11 +274,11 @@ form label {
 
 .product-image {
     width: 100%;
-    height: 150px;
-    object-fit: cover; /* Ensures the image covers the area without distortion */
-    border-bottom: 1px solid #ddd; /* Separator between image and text */
-    margin-bottom: 10px;
-    border-radius: 10px 10px 0 0; /* Rounded corners for the top of the card */
+    height: 250px;
+    object-fit: cover;
+    border-bottom: 2px solid #f5af19;
+    margin-bottom: 15px;
+    border-radius: 12px;
 }
 
 .product-placeholder {
@@ -263,16 +295,18 @@ form label {
     border-radius: 10px 10px 0 0; /* Matches image styling */
 }
 
+/* Auction Images */
 .auction-images {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    overflow-x: auto;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .auction-images img {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -373,6 +407,152 @@ nav ul li a {
 #menuBtn img {
     width: 20px;
     margin-top: 15px;
+}
+
+/* Product details layout */
+#productDetails {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+#productDetails {
+    font-size: 28px;
+    color: #004085; /* Blue for main product title */
+    margin-bottom: 20px;
+}
+
+#productDetails {
+    font-size: 16px;
+    color: #555; /* Gray for details */
+    margin-bottom: 10px;
+}
+
+#productDetails {
+    color: #f5af19; /* Gold for key info labels */
+}
+
+#auctionDetails {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+#auctionDetails h3 {
+    font-size: 28px;
+    color: #004085; /* Blue for auction title */
+    margin-bottom: 20px;
+}
+
+#auctionDetails p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+#auctionDetails p strong {
+    color: #f5af19; /* Gold for key info labels */
+}
+
+/* Bidding Form */
+#bidForm {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 2px solid #f5af19;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#bidAmount {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button[type="submit"] {
+    background-color: #f5af19;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Bidding History */
+#bidList {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+#bidList li {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+    border-left: 5px solid #004085; /* Blue left border for accent */
+}
+
+#bidList li:nth-child(even) {
+    background-color: #ffffff;
+}
+
+#message {
+    color: #f5af19; /* Gold color for alert messages */
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* Style the labels */
+#label {
+    font-weight: bold;
+    color: #004085; /* Blue color for labels */
+    font-size: 16px;
+}
+
+/* Style the input fields */
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #004085; /* Blue border for inputs */
+    border-radius: 6px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: #333;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Add focus effect on the input fields */
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #0056b3; /* Brighter blue on focus */
+    box-shadow: 0 0 5px rgba(0, 85, 179, 0.3); /* Subtle glow */
+    outline: none;
 }
 
 .search-bar {

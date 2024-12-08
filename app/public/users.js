@@ -54,7 +54,7 @@ loginForm.addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Login successful!");
             // Redirect to a protected page or display a logged-in message
-            window.location.href = "http://localhost:3000/listing.html";
+            window.location.href = "http://localhost:3000/index.html";
 
         } else {
             alert("Login failed. Check your username and password.");
