@@ -105,6 +105,30 @@ app.get('/product.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'product.html'));
 });
 
+app.get('/bid_detail.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bid_detail.html'));
+});
+
+app.get('/bid_product.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bid_product.html'));
+});
+
+app.get('/bidding.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bidding.html'));
+});
+
+app.get('/chat.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+app.get('/index.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/messages.html', authorize, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'messages.html'));
+});
+
 app.use(cors());
 app.use(express.static("public"));
 
