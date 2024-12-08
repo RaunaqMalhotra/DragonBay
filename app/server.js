@@ -836,12 +836,15 @@ app.get("/api/user/auctions-won", (req, res) => {
           const userId = result.rows[0].user_id;
 
           return pool.query(
-              `SELECT listing_id, title, description, auction_end_date 
-              FROM Listings 
-              WHERE winner_id = $1 
-              ORDER BY auction_end_date DESC`,
-              [userId]
-          );
+            `SELECT l.listing_id, l.title, l.description, l.auction_end_date,
+                    ARRAY_AGG(p.photo_url) AS photos
+             FROM Listings l
+             LEFT JOIN Photos p ON l.listing_id = p.listing_id
+             WHERE l.winner_id = $1
+             GROUP BY l.listing_id
+             ORDER BY l.auction_end_date DESC`,
+            [userId]
+        );
       })
       .then(result => {
           res.json(result.rows);

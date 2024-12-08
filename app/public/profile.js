@@ -139,11 +139,16 @@ async function fetchAuctionsWon() {
             auctions.forEach(auction => {
                 const card = document.createElement("div");
                 card.className = "auction-card";
+                const imageHtml = auction.photos && auction.photos.length > 0
+                    ? `<img src="/${auction.photos[0]}" alt="${auction.title}" class="product-image">`
+                    : `<div class="product-placeholder">No image available</div>`;
+
                 card.innerHTML = `
                     <a href="/bid_detail.html?id=${auction.listing_id}">
+                        ${imageHtml}
                         <h3>${auction.title}</h3>
                         <p>${auction.description}</p>
-                        <p><strong>Ended:</strong> ${new Date(auction.auction_end_date).toLocaleString()}</p>
+                        <p>Auction Ended: ${new Date(auction.auction_end_date).toLocaleString()}</p>
                     </a>
                 `;
                 grid.appendChild(card);
