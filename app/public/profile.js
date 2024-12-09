@@ -194,11 +194,11 @@ async function fetchProfilePicture() {
             profilePictureImg.src = `/${profilePicturePath}`; // Set the src to the relative path
         } else {
             console.error(result.message);
-            document.getElementById("profilePictureDisplay").src = "/default-profile.png"; // Default profile picture
+            document.getElementById("profilePictureDisplay").src = "images/default-profile.png"; // Default profile picture
         }
     } catch (error) {
         console.error("Error fetching profile picture:", error);
-        document.getElementById("profilePictureDisplay").src = "/default-profile.png"; // Default profile picture
+        document.getElementById("profilePictureDisplay").src = "images/default-profile.png"; // Default profile picture
     }
 }
 
