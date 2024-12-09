@@ -23,8 +23,8 @@ fetch("/auctions")
                 ${imageHtml}
                 <h3>${auction.title}</h3>
                 <p>${auction.description}</p>
-                <p>Minimum Bid: $${auction.minimum_bid}</p>
-                <p>Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
+                <p class="price">Minimum Bid: $${auction.minimum_bid}</p>
+                <p class="price">Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
             </a>
         `;
         grid.appendChild(card);
