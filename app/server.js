@@ -153,8 +153,7 @@ app.get('/messages.html', authorize, (req, res) => {
 });
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use(express.static("public"));
 
 // Set storage engine
 const storage = multer.diskStorage({
@@ -171,7 +170,7 @@ const upload = multer({ storage });
 // Endpoint to handle profile picture upload
 app.post("/upload-profile-picture", upload.single("profilePicture"), (req, res) => {
   const username = tokenStorage[req.cookies.token];
-  const filePath = `/uploads/profile_pictures/${req.file.filename}`;
+  const filePath = `uploads/profile_pictures/${req.file.filename}`;
   pool.query(
       "UPDATE Users SET profile_picture_path = $1 WHERE username = $2",
       [filePath, username]
@@ -247,7 +246,8 @@ const listingUpload = multer({ storage: listingStorage });
 app.post("/add-listing", listingUpload.array("photos", 10), (req, res) => {
   const { name, description, price, tags } = req.body;
   const username = tokenStorage[req.cookies.token];
-  const filePaths = req.files.map(file => `/uploads/listing_photos/${file.filename}`);
+  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
+  console.log(filePaths);
 
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
       .then(result => {
@@ -419,7 +419,7 @@ async function validateSignUp(body) {
 app.post("/add-bid-listing", listingUpload.array("photos", 10), (req, res) => {
   const { name, description, minimumBid, minimumIncrease, auctionEndDate } = req.body;
   const username = tokenStorage[req.cookies.token];
-  const filePaths = req.files.map(file => `/uploads/listing_photos/${file.filename}`);
+  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
 
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
       .then(result => {

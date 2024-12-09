@@ -419,19 +419,19 @@ nav ul li a {
     margin-bottom: 20px;
 }
 
-#productDetails {
+#productDetails h2 {
     font-size: 28px;
     color: #004085; /* Blue for main product title */
     margin-bottom: 20px;
 }
 
-#productDetails {
+#productDetails p {
     font-size: 16px;
     color: #555; /* Gray for details */
     margin-bottom: 10px;
 }
 
-#productDetails {
+#productDetails strong {
     color: #f5af19; /* Gold for key info labels */
 }
 

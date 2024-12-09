@@ -1,12 +1,14 @@
 # DragonBay
 
-To start, run
+Visit [https://dragonbay.fly.dev/] for the deployed website
+
+To start locally, clone the project repo and run
 
 `npm i` or `npm install`
 
-To setup DB, run
+To setup the database locally, run
 
-`npm run setup`
+`npm run setup:local`
 
 Make sure you have your db credentials in an env.json file
 
