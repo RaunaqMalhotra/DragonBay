@@ -1,5 +1,3 @@
-const serverUrl = "http://localhost:3000";
-
 // Event listener for the signup form
 const signupForm = document.getElementById("signup-form");
 if (signupForm) {
@@ -10,7 +8,7 @@ signupForm.addEventListener("submit", async (e) => {
     const password = document.getElementById("signup-password").value;
 
     try {
-        const response = await fetch(`${serverUrl}/create`, {
+        const response = await fetch(`/create`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -43,7 +41,7 @@ loginForm.addEventListener("submit", async (e) => {
     console.log("user:", username);
 
     try {
-        const response = await fetch(`${serverUrl}/login`, {
+        const response = await fetch(`/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

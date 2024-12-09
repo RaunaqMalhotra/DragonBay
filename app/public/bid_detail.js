@@ -6,7 +6,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const auctionId = urlParams.get('id');
 
 // Connect to Socket.IO
-const socket = io("ws://localhost:3000");
+const socket = io(window.location.origin);
 
 socket.on('connect', () => {
     console.log('Connected to server:', socket.id);

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const pg = require("pg");
 const path = require("path");
 const express = require("express");
@@ -7,28 +8,36 @@ const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const cors = require("cors"); // Import cors
 const http = require('http'); // To create the server
+process.chdir(__dirname);
 
+let tokenStorage = {};
 const server = http.createServer(app); // Create HTTP server
 const { Server } = require('socket.io');
 
-const port = process.env.PORT || 3000;
-const hostname = "localhost";
+let port = process.env.PORT || 3000;
+let host;
 const ADMIN = "Admin";
 
-const env = require("../config/env.json");
+const env = require("./env.json");
 const Pool = pg.Pool;
-const pool = new Pool(env);
 const multer = require("multer");
 
 // Store connected users
-let tokenStorage = {};
+let databaseConfig;
 
-pool.connect().then(function () {
-  console.log(`Connected to database ${env.database}`);
-}).catch(error => {
-  console.error("Database connection error:", error);
+if (process.env.NODE_ENV == "production") {
+  host = "0.0.0.0";
+	databaseConfig = { connectionString: process.env.DATABASE_URL };
+} else {
+	host = "localhost";
+	let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
+	databaseConfig = { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT };
+}
+
+let pool = new Pool(databaseConfig);
+pool.connect().then(() => {
+	console.log("Connected to db");
 });
-
 
 app.use(express.json());
 app.use(cookieParser());
@@ -79,15 +88,29 @@ app.get("/", (req, res) => {
 });
 
 
-/* middleware; check if login token in token storage, if not, redirect to login page */
-let authorize = (req, res, next) => {
-  let { token } = req.cookies;
-  console.log(token, tokenStorage);
-  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+/* middleware; check if login token in token storage, if not, redirect to welcome page */
+let authorize = async (req, res, next) => {
+  let token = req.cookies.token;
+
+  if (!token) {
     return res.redirect('/welcome.html');
   }
-  next();
+
+  try {
+    const result = await pool.query("SELECT username FROM user_tokens WHERE token = $1", [token]);
+    if (result.rows.length === 0) {
+      return res.redirect('/welcome.html');
+    }
+    req.username = result.rows[0].username;
+    console.log(token);
+    console.log(token, tokenStorage);
+    next();
+  } catch (error) {
+    console.error('Error checking token:', error);
+    res.redirect('/welcome.html');
+  }
 };
+
 
 app.get('/listing.html', authorize, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'listing.html'));
@@ -130,12 +153,13 @@ app.get('/messages.html', authorize, (req, res) => {
 });
 
 app.use(cors());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Set storage engine
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-      cb(null, "public/uploads/profile_pictures/");
+      cb(null, path.join(__dirname, 'public/uploads/profile_pictures/'));
   },
   filename: function (req, file, cb) {
       const uniqueName = `user-${Date.now()}-${file.originalname}`;
@@ -147,7 +171,7 @@ const upload = multer({ storage });
 // Endpoint to handle profile picture upload
 app.post("/upload-profile-picture", upload.single("profilePicture"), (req, res) => {
   const username = tokenStorage[req.cookies.token];
-  const filePath = `uploads/profile_pictures/${req.file.filename}`;
+  const filePath = `/uploads/profile_pictures/${req.file.filename}`;
   pool.query(
       "UPDATE Users SET profile_picture_path = $1 WHERE username = $2",
       [filePath, username]
@@ -210,7 +234,7 @@ app.post('/profile/update-password', authorize, async (req, res) => {
 // Storage for listing photos
 const listingStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-      cb(null, "public/uploads/listing_photos/"); // Directory for listing photos
+      cb(null, path.join(__dirname, 'public/uploads/listing_photos/')); // Directory for listing photos
   },
   filename: function (req, file, cb) {
       const uniqueName = `listing-${Date.now()}-${file.originalname}`; // Unique naming for listing photos
@@ -223,7 +247,7 @@ const listingUpload = multer({ storage: listingStorage });
 app.post("/add-listing", listingUpload.array("photos", 10), (req, res) => {
   const { name, description, price, tags } = req.body;
   const username = tokenStorage[req.cookies.token];
-  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
+  const filePaths = req.files.map(file => `/uploads/listing_photos/${file.filename}`);
 
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
       .then(result => {
@@ -346,8 +370,8 @@ function makeToken() {
 
 let cookieOptions = {
   httpOnly: true, // client-side JS can't access this cookie; important to mitigate cross-site scripting attack damage
-  secure: true, // cookie will only be sent over HTTPS connections (and localhost); important so that traffic sniffers can't see it even if our user tried to use an HTTP version of our site, if we supported that
-  sameSite: "strict", // browser will only include this cookie on requests to this domain, not other domains; important to prevent cross-site request forgery attacks
+  secure: process.env.NODE_ENV === 'production', // cookie will only be sent over HTTPS connections (and localhost); important so that traffic sniffers can't see it even if our user tried to use an HTTP version of our site, if we supported that
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // browser will only include this cookie on requests to this domain, not other domains; important to prevent cross-site request forgery attacks
 };
 
 // validate user sign up
@@ -395,7 +419,7 @@ async function validateSignUp(body) {
 app.post("/add-bid-listing", listingUpload.array("photos", 10), (req, res) => {
   const { name, description, minimumBid, minimumIncrease, auctionEndDate } = req.body;
   const username = tokenStorage[req.cookies.token];
-  const filePaths = req.files.map(file => `uploads/listing_photos/${file.filename}`);
+  const filePaths = req.files.map(file => `/uploads/listing_photos/${file.filename}`);
 
   pool.query("SELECT user_id FROM Users WHERE username = $1", [username])
       .then(result => {
@@ -584,7 +608,17 @@ app.post("/login", async (req, res) => {
   let token = makeToken();
   console.log("Generated token", token);
   tokenStorage[token] = username;
-  return res.cookie("token", token, cookieOptions).send(); // TODO
+  // Store token in the database
+  pool.query(
+    "INSERT INTO user_tokens (token, username) VALUES ($1, $2)",
+    [token, username]
+  ).then(() => {
+    console.log('Token stored successfully');
+  }).catch(error => {
+    console.error('Error storing token:', error);
+  });
+  
+  return res.cookie("token", token, cookieOptions).send();
 });
 
 
@@ -887,12 +921,6 @@ app.delete("/api/listings/:id", authorize, (req, res) => {
       });
 });
 
-// Start the server
-server.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-
-
 // Endpoint to fetch recent messages for a specific user
 app.get("/messages/recent", async (req, res) => {
   const username = req.username;
@@ -1091,3 +1119,8 @@ function getUser(id) {
 function getUsersInRoom(room) {
   return UsersState.users.filter(user => user.room === room);
 }
+
+// Start the server
+server.listen(port, () => {
+  console.log(`Server running at http://${host}:${port}`);
+});

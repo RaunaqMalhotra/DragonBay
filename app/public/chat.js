@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const socket = io("ws://localhost:3000");
+    const socket = io(window.location.origin);
 
     let chatRoom = '';
     let userName = '';

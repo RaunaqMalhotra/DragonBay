@@ -1,11 +1,15 @@
--- Drop the database if it already exists
-DROP DATABASE IF EXISTS dragonbay;
-
--- Create the database
-CREATE DATABASE dragonbay;
-
 -- Connect to the new database
 \c dragonbay
+
+-- Drop Tables if they exist
+DROP TABLE IF EXISTS user_tokens;
+DROP TABLE IF EXISTS Messages;
+DROP TABLE IF EXISTS Bids;
+DROP TABLE IF EXISTS ListingTags;
+DROP TABLE IF EXISTS Tags;
+DROP TABLE IF EXISTS Photos;
+DROP TABLE IF EXISTS Listings;
+DROP TABLE IF EXISTS Users;
 
 -- Create Users table
 CREATE TABLE Users (
@@ -75,4 +79,12 @@ CREATE TABLE Messages (
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (sender) REFERENCES Users(username),
     FOREIGN KEY (receiver) REFERENCES Users(username)
+);
+
+-- Create user_tokens table
+CREATE TABLE user_tokens (
+    token VARCHAR(64) PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (username) REFERENCES Users(username) ON DELETE CASCADE
 );
