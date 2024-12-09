@@ -9,6 +9,12 @@
 </head>
 <body>
     <div id="navbar-placeholder"></div>
+    <div class="profile-container-chat">
+        <div class="profile-picture-chat">
+            <img id="profilePictureDisplay" alt="Profile Picture">
+        </div>
+        <h1 id="profileNameDisplay"></h1>
+    </div>
 
     <main>
         <ul class="chat-display"></ul>
@@ -22,7 +28,7 @@
         
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js" integrity="sha512-8ExARjWWkIllMlNzVg7JKq9RKWPlJABQUNq6YvAjE/HobctjH/NA+bSiDMDvouBVjp4Wwnf1VP1OEv7Zgjtuxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script defer src = "chat.js"></script>
+    <script defer src = "chat.js" type="module"></script>
     <script src="navbar.js"></script>
 </body>
 </html>

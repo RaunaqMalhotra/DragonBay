@@ -28,6 +28,7 @@ body {
 
 /* Navbar Placeholder */
 #navbar-placeholder {
+    position: relative; /* Ensure the profile container is positioned relative to this */
     background-color: #4a90e2;
     height: 60px;
     display: flex;
@@ -39,6 +40,44 @@ body {
     text-transform: uppercase;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
+/* Profile Container */
+.profile-container-chat {
+    position: absolute; 
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; /* Align items horizontally */
+    align-items: center; /* Center profile picture and text vertically */
+    z-index: 10; /* Ensure it's above the navbar */
+}
+
+.profile-picture-chat {
+    width: 50px; /* Fixed size for consistency */
+    height: 50px; /* Fixed size for consistency */
+    border-radius: 50%; /* Circular image */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Ensure image fits within circle */
+    background-color: #f9f9f9;
+    margin-right: 20px;
+    border: 2px solid #f2ce7f;
+}
+
+.profile-picture-chat img {
+    width: 100%; /* Fit image within the circle */
+    height: auto;
+    object-fit: cover; /* Maintain aspect ratio and cover the circle */
+}
+
+#profileNameDisplay {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: left;
+}
+
 /* Chat Display */
 .chat-display {
     flex: 1;
@@ -187,5 +226,11 @@ body {
     .form-msg button {
         font-size: 12px;
         padding: 8px 15px;
+    }
+
+    .profile-container {
+        top: 5px; /* Slightly lower to avoid being too close to the edge */
+        transform: none; /* Disable horizontal centering if needed */
+        left: auto; /* Adjust alignment as necessary */
     }
 }
