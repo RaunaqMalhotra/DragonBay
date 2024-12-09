@@ -858,7 +858,7 @@ const checkForEndedAuctions = () => {
 };
 
 // Run the check periodically (e.g., every minute)
-setInterval(checkForEndedAuctions, 60 * 1000);
+setInterval(checkForEndedAuctions, 30 * 1000);
 
 // Endpoint for winning auctions
 app.get("/api/user/auctions-won", (req, res) => {
