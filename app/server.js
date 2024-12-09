@@ -160,8 +160,10 @@ app.post("/upload-profile-picture", upload.single("profilePicture"), (req, res) 
       res.status(500).json({ message: "Failed to update profile picture path" });
   });
 });
+
 app.get("/api/user/profile-picture", (req, res) => {
-const username = tokenStorage[req.cookies.token];
+  const otherUser_username = req.query.other_user;
+  const username = otherUser_username ?? tokenStorage[req.cookies.token];
 pool.query("SELECT profile_picture_path FROM Users WHERE username = $1", [username])
     .then(result => {
         if (result.rows.length === 0 || !result.rows[0].profile_picture_path) {
@@ -170,7 +172,7 @@ pool.query("SELECT profile_picture_path FROM Users WHERE username = $1", [userna
         res.json({ profilePicturePath: result.rows[0].profile_picture_path });
     })
     .catch(error => {
-        console.error("Error fetching profile picture path:", error);
+        console.error(error);
         res.status(500).json({ message: "Failed to fetch profile picture" });
     });
 });
