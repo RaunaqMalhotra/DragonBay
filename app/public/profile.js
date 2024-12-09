@@ -58,6 +58,7 @@ async function fetchUserListings() {
                     <h3>${listing.title}</h3>
                     <p>${listing.description}</p>
                     <p>Price: $${listing.price}</p>
+                </a>
                     <button onclick="deleteListing(${listing.listing_id})">Delete</button>
                 `;
                 grid.appendChild(card);
