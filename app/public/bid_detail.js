@@ -6,7 +6,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const auctionId = urlParams.get('id');
 
 // Connect to Socket.IO
-const socket = io("ws://localhost:3000");
+const socket = io(window.location.origin);
 
 socket.on('connect', () => {
     console.log('Connected to server:', socket.id);
@@ -29,7 +29,7 @@ function fetchAuctionDetails() {
     fetch(`/auction/${auctionId}`)
         .then(response => response.json())
         .then(auction => {
-            let auctionDetails = document.getElementById('auctionDetails');
+            const auctionDetails = document.getElementById('auctionDetails');
             let bidList = document.getElementById('bidList');
             let auctionImages = document.getElementById('auctionImages');
 
@@ -51,9 +51,9 @@ function fetchAuctionDetails() {
             // Display auction details
             auctionDetails.innerHTML = `
                 <h3>${auction.title}</h3>
-                <p>${auction.description}</p>
-                <p id="minimumBid" data-value="${auction.minimum_bid}">Minimum Bid: $${auction.minimum_bid}</p>
-                <p>Ends: ${new Date(auction.auction_end_date).toLocaleString()}</p>
+                <p><strong>Description:</strong> ${auction.description}</p>
+                <p id="minimumBid" data-value="${auction.minimum_bid}"> <strong>Minimum Bid:</strong> $${auction.minimum_bid}</p>
+                <p><strong>Ends:</strong> ${new Date(auction.auction_end_date).toLocaleString()}</p>
             `;
 
             // Display auction images
@@ -73,7 +73,7 @@ function fetchAuctionDetails() {
             if (auction.bids && auction.bids.length > 0) {
                 auction.bids.forEach(bid => {
                     let listItem = document.createElement('li');
-                    listItem.textContent = `${username}: $${bid.bid_amount}`;
+                    listItem.textContent = `${bid.username}: $${bid.bid_amount}`;
                     bidList.appendChild(listItem);
                 });
             } else {

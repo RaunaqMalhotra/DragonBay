@@ -67,7 +67,10 @@ if (productId) {
 
 if (button) {
     button.addEventListener('click', () => {
-        //TODO: redirection should not happen if any of user is undefined
-        window.location.href = `chat.html?room=${room}&current_user=${buyer_username}&other_user=${seller_username}`;
+        if (!buyer_username || !seller_username || buyer_username !== seller_username) {
+            window.location.href = `chat.html?room=${room}&current_user=${buyer_username}&other_user=${seller_username}`;
+        } else {
+            alert("You cannot chat with yourself.");
+        }
     });
 }

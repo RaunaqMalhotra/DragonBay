@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         .then(response => {
                             if (response.ok) {
                                 console.log("Logout successful");
-                                window.location.href = "/login.html";
+                                window.location.href = "/welcome.html";
                             } else {
                                 console.error("Logout failed");
                                 alert("Logout failed. Please try again.");

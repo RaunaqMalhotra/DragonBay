@@ -24,23 +24,82 @@ h1 {
     margin-bottom: 20px;
     text-align: center;
 }
+
+h2 {
+    font-size: 28px;
+    color: #f5af19; /* Dark blue for headings */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 a {
-    text-decoration: none; /* Removes underlining from all anchor tags */
-    color: inherit; /* Ensures the text color matches its parent container */
+    text-decoration: underline; /* Removes underlining from all anchor tags */
+    color: #004085; /* Ensures the text color matches its parent container */
 }
 a:hover {
     text-decoration: underline; /* Optional: Add underlining on hover for clarity */
 }
 /* Container for the Profile Section */
 .container {
-    max-width: 90%;
-    width: 800px;
+    max-width: 800px;
     padding: 30px;
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-    margin: 24px;
+    margin: 40px auto;
     border: 2px solid #f5af19; /* Gold border for emphasis */
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    color: #004085; /* Deep blue for labels */
+    margin-bottom: 8px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: #444;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+    border-color: #004085; /* Blue border for focus */
+    background-color: #ffffff;
+    outline: none;
+}
+
+button[type="submit"] {
+    background-color: #004085;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Profile Container */
@@ -62,10 +121,13 @@ a:hover {
 
 /* Container for the Product Grid */
 .product-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive columns */
+    gap: 20px; /* Space between cards */
+    padding: 20px; /* Space around the grid */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto; /* Center grid on the page */
 }
 
 .profile-picture img {
@@ -101,6 +163,28 @@ button:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Contact Seller Button */
+.contact-seller {
+    background-color: #f5af19;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: block;
+    margin: 20px auto;
+}
+
+.contact-seller:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Inputs and Forms */
 input[type="text"],
 input[type="password"],
@@ -129,88 +213,105 @@ form label {
 }
 
 /* Listing Grid */
-.listing-grid, .bidding-grid {
+.listing-grid, .bidding-grid, .auction-won-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     padding: 20px;
     width: 100%;
     max-width: 1200px;
-    margin-bottom: 20px;
+    margin: 0 auto;
 }
 
 .product-card {
     background-color: #ffffff;
-    border: 1px solid #f5af19; /* Gold border */
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    text-align: center;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #ddd; /* Light border around each card */
+    border-radius: 10px; /* Rounded corners for a modern look */
+    padding: 15px; /* Padding inside the card */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px); /* Slightly lift card on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
 }
 
 .product-card h3 {
-    font-size: 20px;
-    color: #004085;
-    margin-bottom: 10px;
+    font-size: 18px;
+    color: #004085; /* Deep blue */
+    margin: 10px 0 5px; /* Spacing above and below */
 }
 
 .product-card p {
     font-size: 14px;
-    color: #555;
-    margin: 5px 0;
+    color: #555; /* Dark gray */
+    margin: 5px 0; /* Spacing between paragraphs */
 }
 
-.product-card p.price {
+.product-card .price {
     font-weight: bold;
     font-size: 16px;
-    color: #333;
+    color: #f5af19; /* Gold */
     margin-top: 10px;
 }
 
 .product-images {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
 .product-images img {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.product-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-bottom: 2px solid #f5af19;
+    margin-bottom: 15px;
+    border-radius: 12px;
+}
+
+.product-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 150px;
+    background-color: #f5f5f5; /* Light gray background */
+    color: #999; /* Gray text */
+    font-size: 14px;
+    border-bottom: 1px solid #ddd; /* Separator line */
+    margin-bottom: 10px;
+    border-radius: 10px 10px 0 0; /* Matches image styling */
+}
+
+/* Auction Images */
 .auction-images {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    overflow-x: auto;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .auction-images img {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.auction-won-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
 
 .auction-card {
     background-color: #ffffff;
@@ -301,11 +402,159 @@ nav ul li a {
     border-radius: 50%;
     z-index: 3;
     cursor: pointer;
+    margin-top: 10px;
 }
 
 #menuBtn img {
     width: 20px;
     margin-top: 15px;
+}
+
+/* Product details layout */
+#productDetails {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+#productDetails h2 {
+    font-size: 28px;
+    color: #004085; /* Blue for main product title */
+    margin-bottom: 20px;
+}
+
+#productDetails p {
+    font-size: 16px;
+    color: #555; /* Gray for details */
+    margin-bottom: 10px;
+}
+
+#productDetails strong {
+    color: #f5af19; /* Gold for key info labels */
+}
+
+#auctionDetails {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+#auctionDetails h3 {
+    font-size: 28px;
+    color: #004085; /* Blue for auction title */
+    margin-bottom: 20px;
+}
+
+#auctionDetails p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+#auctionDetails p strong {
+    color: #f5af19; /* Gold for key info labels */
+}
+
+/* Bidding Form */
+#bidForm {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 2px solid #f5af19;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#bidAmount {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button[type="submit"] {
+    background-color: #f5af19;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Bidding History */
+#bidList {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+#bidList li {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+    border-left: 5px solid #004085; /* Blue left border for accent */
+}
+
+#bidList li:nth-child(even) {
+    background-color: #ffffff;
+}
+
+#message {
+    color: #f5af19; /* Gold color for alert messages */
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* Style the labels */
+#label {
+    font-weight: bold;
+    color: #004085; /* Blue color for labels */
+    font-size: 16px;
+}
+
+/* Style the input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #004085; /* Blue border for inputs */
+    border-radius: 6px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    color: #333;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Add focus effect on the input fields */
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #0056b3; /* Brighter blue on focus */
+    box-shadow: 0 0 5px rgba(0, 85, 179, 0.3); /* Subtle glow */
+    outline: none;
 }
 
 .search-bar {
@@ -366,8 +615,118 @@ nav ul li a {
     font-weight: bold;
     font-style: italic;
 }
-.top-right {
+.top-left {
     position: absolute;
     top: 10px;
-    right: 30px;
+    left: 30px;
+    padding-top: 10px;
+}
+#message-button {
+    color: #f5af19;
+    background-color: #f5af19;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.dropdown-content {
+    display: none; 
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+/* Welcome Page Styling */
+.welcome-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #004085, #f5af19); /* Blue to Gold Gradient */
+    color: white;
+    padding: 20px;
+}
+
+.welcome-container h1 {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+}
+
+.welcome-container h1 span {
+    background: linear-gradient(90deg, #f5af19 66%, #004085 34%);
+    background-clip: text; /* For standard browsers */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
+
+.welcome-container p {
+    font-size: 20px;
+    margin-bottom: 40px;
+    font-weight: lighter;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Image Container Styling */
+.image-container {
+    margin: 10px 0; /* Add spacing above and below the image */
+    text-align: center;
+}
+
+.image-container img {
+    width: 280px; /* Adjust the size of the image */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 10px; /* Optional: Rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+    transition: transform 0.3s ease;
+}
+
+.image-container img:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.welcome-button {
+    background-color: #004085;
+    color: #ffffff;
+    border: 2px solid #f5af19; /* Gold border */
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.welcome-button:hover {
+    background-color: #0056b3; /* Lighter blue on hover */
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.signup-btn {
+    background-color: #f5af19;
+    color: #ffffff;
+    border: 2px solid #004085; /* Blue border */
+}
+
+.signup-btn:hover {
+    background-color: #f7c04a; /* Lighter gold on hover */
 }

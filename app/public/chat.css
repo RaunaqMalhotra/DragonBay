@@ -1,97 +1,139 @@
-* {
+/* Main Chat Section */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 90%;
+}
+
+/* General Styling */
+body {
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-size: 1rem;
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-body {
-    background-color: #000;
-    color: #fff;
-}
-
-main {
+    background-color: #f5f7fa; /* Light background for contrast */
+    color: #333;
+    display: flex;
+    flex-direction: column;
     height: 100vh;
-    padding: 1rem;
-    display: flex;
-    flex-flow: column;
 }
 
-form {
-    width: 100%;
-    margin: auto;
-    max-width: 600px;
+/* Navbar Placeholder */
+#navbar-placeholder {
+    position: relative; /* Ensure the profile container is positioned relative to this */
+    background-color: #4a90e2;
+    height: 60px;
     display: flex;
-    flex-flow: row nowrap;
+    align-items: center;
     justify-content: center;
-    gap: .25rem;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-input {
-    flex-grow: 1;
-    max-width: calc(80% - .25rem);
+/* Profile Container */
+.profile-container-chat {
+    position: absolute; 
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; /* Align items horizontally */
+    align-items: center; /* Center profile picture and text vertically */
+    z-index: 10; /* Ensure it's above the navbar */
 }
 
-button {
-    width: 20%;
-}
-
-input,
-button {
-    border-radius: 10px;
-    padding: .5rem;
-}
-
-.chat-display {
-    background-color: #333;
-    list-style-type: none;
-    width: 100%;
-    max-width: 600px;
-    border-radius: 10px;
-    margin: 1rem auto;
-    padding: 0;
+.profile-picture-chat {
+    width: 50px; /* Fixed size for consistency */
+    height: 50px; /* Fixed size for consistency */
+    border-radius: 50%; /* Circular image */
     display: flex;
-    flex-flow: column;
-    justify-content: left;
-    overflow: auto;
-    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Ensure image fits within circle */
+    background-color: #f9f9f9;
+    margin-right: 20px;
+    border: 2px solid #f2ce7f;
 }
 
-.post {
-    background-color: #eee;
+.profile-picture-chat img {
+    width: 100%; /* Fit image within the circle */
+    height: auto;
+    object-fit: cover; /* Maintain aspect ratio and cover the circle */
+}
+
+#profileNameDisplay {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: left;
+}
+
+/* Chat Display */
+.chat-display {
+    flex: 1;
+    list-style: none;
+    padding: 20px;
+    margin: 0;
+    height: 60vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-bottom: 1px solid #ddd;
+    
+}
+
+.chat-display li {
+    min-width: 250px; /* Minimum width for consistent appearance */
+    max-width: 70%; /* Limit maximum width */
+    padding: 10px;
     border-radius: 10px;
-    padding: 0 0 .25rem;
-    margin: .5rem;
-    overflow: hidden;
-    flex-shrink: 0;
+    color: #333;
+    word-wrap: break-word; /* Break long words */
+    display: flex;
+    flex-direction: column;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.post__header--name {
+    font-weight: bold;
 }
 
 .post--left {
-    width: 60%;
     align-self: flex-start;
+    background-color: #f2ce7f; /* Light green for sent messages */
+    color: #333;
+    text-align: left;
 }
 
 .post--right {
-    width: 60%;
     align-self: flex-end;
+    background-color: #3f97f6; /* Light blue for received messages */
+    color: #333;
+    text-align: right;
 }
 
-.post__header {
-    color: #fff;
-    padding: .25rem .5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: .5rem;
-}
-
-.post__header--user {
-    background-color: blue;
-}
-
-.post__header--reply {
-    background-color: purple;
+.post--admin {
+    align-self: center;
+    background-color: #f9f9f9;
+    color: #666;
+    font-style: italic;
 }
 
 .post__header--name {
@@ -99,25 +141,96 @@ button {
 }
 
 .post__header--time {
-    font-size: .8rem;
+    font-size: 12px;
+    color: gray;
+    margin-left: 10px; /* Add spacing */
+    flex-shrink: 0; /* Prevent timestamp from shrinking */
 }
 
 .post__text {
-    margin-top: 5px;
-    color: #333;
-    padding: .25rem .5rem;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-.user-list,
-.room-list,
-.activity {
-    width: 100%;
-    min-height: 2.65rem;
-    margin: 0 auto;
-    max-width: 600px;
-    padding: .75rem .25rem;
+.post__header--time {
+    font-size: 12px;
+    color: rgb(196, 193, 193);
 }
 
-.activity {
-    font-style: italic;
+/* User and Room Lists */
+.user_activity {
+    padding: 10px 20px;
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    text-align: left;
+}
+
+/* Message Form */
+.form-msg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #ddd;
+    background-color: #f5f7fa;
+}
+
+.form-msg input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-msg button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.form-msg button:hover {
+    background-color: #357abd; /* Darker blue on hover */
+}
+
+/* Scrollbar Styling */
+.chat-display::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-display::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.chat-display::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    main {
+        width: 95%;
+    }
+
+    .form-msg input[type="text"] {
+        font-size: 12px;
+    }
+
+    .form-msg button {
+        font-size: 12px;
+        padding: 8px 15px;
+    }
+
+    .profile-container {
+        top: 5px; /* Slightly lower to avoid being too close to the edge */
+        transform: none; /* Disable horizontal centering if needed */
+        left: auto; /* Adjust alignment as necessary */
+    }
 }

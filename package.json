@@ -1,7 +1,9 @@
 {
   "scripts": {
-    "start": "cd app && node server.js",
-    "setup": "psql -U postgres -f setup.sql"
+    "start": "node app/server.js",
+    "setup": "fly postgres connect -a dragonbaydb < setup.sql",
+    "start:local": "node app/server.js",
+    "setup:local": "psql -d postgres --user postgres -c \"create database dragonbay\" -f setup.sql"
   },
   "dependencies": {
     "2": "^3.0.0",
@@ -9,12 +11,17 @@
     "argon2": "^0.41.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "fly": "^4.6.11",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.13.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.4.11"
   },
   "name": "dragonbay",
   "version": "1.0.0",

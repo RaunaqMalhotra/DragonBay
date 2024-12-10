@@ -1,5 +1,3 @@
-const serverUrl = "http://localhost:3000";
-
 // Event listener for the signup form
 const signupForm = document.getElementById("signup-form");
 if (signupForm) {
@@ -10,7 +8,7 @@ signupForm.addEventListener("submit", async (e) => {
     const password = document.getElementById("signup-password").value;
 
     try {
-        const response = await fetch(`${serverUrl}/create`, {
+        const response = await fetch(`/create`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -21,11 +19,11 @@ signupForm.addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Signup successful! You are now logged in.");
             // You could redirect the user to a new page or display a welcome message
-            window.location.href = "http://localhost:3000";
+            window.location.href = "index.html";
 
         } else {
-             const errorData = await response.json();
-             alert(`Signup failed: ${errorData.error || "Try a different username."}`);
+            const errorData = await response.json();
+            alert(`Signup failed: ${errorData.error || "Try a different username."}`);
         }
     } catch (error) {
         console.error("Error:", error);
@@ -43,7 +41,7 @@ loginForm.addEventListener("submit", async (e) => {
     console.log("user:", username);
 
     try {
-        const response = await fetch(`${serverUrl}/login`, {
+        const response = await fetch(`/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -54,7 +52,7 @@ loginForm.addEventListener("submit", async (e) => {
         if (response.ok) {
             alert("Login successful!");
             // Redirect to a protected page or display a logged-in message
-            window.location.href = "http://localhost:3000/listing.html";
+            window.location.href = "index.html";
 
         } else {
             alert("Login failed. Check your username and password.");

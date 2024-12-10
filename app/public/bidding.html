@@ -9,31 +9,44 @@
 <body>
     <div id="navbar-placeholder"></div>
 
+<div class="container">
     <form id="biddingForm">
-        <h2>List Your Item for Bidding</h2>
+        <h2>List Your Item Up For Auction</h2>
+        <div class="form-group">
+            <label for="itemName">Item Name</label>
+            <input type="text" id="itemName" name="itemName" required>
+        </div>
 
-        <label for="itemName">Item Name</label>
-        <input type="text" id="itemName" name="itemName" required>
+        <div class="form-group">
+            <label for="itemDescription">Description</label>
+            <textarea id="itemDescription" name="itemDescription" rows="4" required></textarea>
+        </div>
 
-        <label for="itemDescription">Description</label>
-        <textarea id="itemDescription" name="itemDescription" rows="4" required></textarea>
+        <div class="form-group">
+            <label for="minBidPrice">Minimum Bid Price</label>
+            <input type="number" id="minBidPrice" name="minBidPrice" required>
+        </div>
 
-        <label for="minBidPrice">Minimum Bid Price</label>
-        <input type="number" id="minBidPrice" name="minBidPrice" required>
-
-        <label for="minBidPrice">Minimum Bid Increase (the minimum price difference of each bid)</label>
-        <input type="number" id="minBidIncrease" name="minBidIncrease" required>
+        <div class="form-group">
+            <label for="minBidPrice">Minimum Bid Increase (the minimum price difference of each bid)</label>
+            <input type="number" id="minBidIncrease" name="minBidIncrease" required>
+        </div>
         
-        <label for="auctionEndDate">Auction End Date</label>
-        <input type="datetime-local" id="auctionEndDate" name="auctionEndDate" required>
+        <div class="form-group">
+            <label for="auctionEndDate">Auction End Date</label>
+            <input type="datetime-local" id="auctionEndDate" name="auctionEndDate" required>
+        </div>
 
-        <label for="itemPhotos">Upload Photos</label>
-        <input type="file" id="itemPhotos" name="itemPhotos" accept="image/*" multiple required>
+        <div class="form-group">
+            <label for="itemPhotos">Upload Photos</label>
+            <input type="file" id="itemPhotos" name="itemPhotos" accept="image/*" multiple required>
+        </div>
 
         <button id="bidSubmit" type="submit">List for Bidding</button>
 
         <div id="message"></div>
     </form>
+</div>
     <script src="bidding.js"></script>
     <script src="navbar.js"></script>
 
